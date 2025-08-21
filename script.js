@@ -397,6 +397,9 @@ function handleRoomUpdate(roomData) {
     if (playerList.length >= 2) {
         document.getElementById('lobby-status').textContent = 'Both players connected! Ready to start.';
         document.getElementById('start-online-game').disabled = false;
+    } else {
+        document.getElementById('lobby-status').textContent = 'Waiting for other player to join...';
+        document.getElementById('start-online-game').disabled = true;
     }
     
     // Handle game state updates
@@ -440,26 +443,29 @@ async function startOnlineGame() {
     }
     
     // Check if both players are connected
-    if (isFirebaseConnected) {
-        try {
-            const roomSnapshot = await database.ref(`rooms/${roomCode}`).once('value');
-            const roomData = roomSnapshot.val();
-            if (roomData && roomData.players) {
-                const connectedPlayers = Object.values(roomData.players).filter(p => p.connected);
-                if (connectedPlayers.length < 2) {
-                    document.getElementById('lobby-status').textContent = 'Waiting for other player to join...';
-                    document.getElementById('start-online-game').disabled = true;
-                    return;
-                }
-            } else {
-                alert('Room not found or no players connected.');
+    if (!isFirebaseConnected) {
+        alert('Not connected to Firebase. Please refresh and try again.');
+        return;
+    }
+    
+    try {
+        const roomSnapshot = await database.ref(`rooms/${roomCode}`).once('value');
+        const roomData = roomSnapshot.val();
+        if (roomData && roomData.players) {
+            const connectedPlayers = Object.values(roomData.players).filter(p => p.connected);
+            if (connectedPlayers.length < 2) {
+                document.getElementById('lobby-status').textContent = 'Waiting for other player to join...';
+                document.getElementById('start-online-game').disabled = true;
                 return;
             }
-        } catch (error) {
-            console.error('Failed to check room status:', error);
-            alert('Failed to verify room status. Please try again.');
+        } else {
+            alert('Room not found or no players connected.');
             return;
         }
+    } catch (error) {
+        console.error('Failed to check room status:', error);
+        alert('Failed to verify room status. Please try again.');
+        return;
     }
     
     // Update player name in Firebase
