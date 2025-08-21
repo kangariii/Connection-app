@@ -1,4 +1,4 @@
-// Questions Database for Connection & Discover App
+// Questions Database for Who Are You? App
 // Questions are organized by Round -> Category -> Relationship Type
 
 const questionsDatabase = {

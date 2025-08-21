@@ -38,7 +38,7 @@ const roundConfigs = {
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Connection & Discover App Initialized');
+    console.log('Who Are You? App Initialized');
     showScreen('welcome-screen');
 });
 
