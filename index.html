@@ -83,6 +83,71 @@
         </div>
     </div>
 
+    <!-- Multiplayer Mode Selection Screen -->
+    <div id="mode-screen" class="screen">
+        <div class="container">
+            <h2 class="screen-title">Choose Play Mode</h2>
+            <p class="screen-subtitle">How would you like to play?</p>
+            <div class="mode-buttons">
+                <button onclick="selectLocalMode()" class="mode-btn">
+                    <h3>Same Device</h3>
+                    <p>Pass the phone back and forth</p>
+                </button>
+                <button onclick="selectOnlineMode()" class="mode-btn">
+                    <h3>Two Phones</h3>
+                    <p>Play on separate devices</p>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Room Setup Screen -->
+    <div id="room-screen" class="screen">
+        <div class="container">
+            <h2 class="screen-title">Online Play</h2>
+            <div class="room-options">
+                <button onclick="createGameRoom()" class="room-btn">
+                    <h3>Create Room</h3>
+                    <p>Start a new game and share the code</p>
+                </button>
+                <button onclick="showJoinRoom()" class="room-btn">
+                    <h3>Join Room</h3>
+                    <p>Enter a room code to join</p>
+                </button>
+            </div>
+            
+            <div id="join-room-input" class="join-room-input hidden">
+                <input type="text" id="room-code-input" placeholder="Enter room code" maxlength="6">
+                <button onclick="joinGameRoom()" class="main-btn">Join Room</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Lobby Screen -->
+    <div id="lobby-screen" class="screen">
+        <div class="container">
+            <h2 class="screen-title">Room Lobby</h2>
+            <div id="room-info">
+                <p>Room Code: <span id="room-code-display" class="room-code"></span></p>
+                <p id="lobby-status">Waiting for other player...</p>
+            </div>
+            
+            <div class="player-inputs">
+                <div class="input-group">
+                    <label for="your-name">Your Name:</label>
+                    <input type="text" id="your-name" placeholder="Enter your name">
+                </div>
+            </div>
+            
+            <div id="players-list" class="players-list">
+                <h3>Players:</h3>
+                <div id="players-container"></div>
+            </div>
+            
+            <button id="start-online-game" onclick="startOnlineGame()" class="main-btn" disabled>Begin Journey</button>
+        </div>
+    </div>
+
     <!-- Player Setup Screen -->
     <div id="setup-screen" class="screen">
         <div class="container">
@@ -154,6 +219,10 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    
     <!-- Scripts -->
     <script src="config.js"></script>
     <script src="questions.js"></script>

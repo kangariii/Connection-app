@@ -325,6 +325,206 @@ body {
     line-height: 1.6;
 }
 
+/* Mode Selection */
+.mode-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 30px 0;
+}
+
+.mode-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    padding: 30px 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    font-family: 'Poppins', sans-serif;
+    color: white;
+    text-align: center;
+    min-width: 200px;
+    flex: 1;
+    max-width: 300px;
+}
+
+.mode-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.mode-btn h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.mode-btn p {
+    font-size: 0.95rem;
+    opacity: 0.8;
+    line-height: 1.4;
+}
+
+/* Room Setup */
+.room-options {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 30px 0;
+}
+
+.room-btn {
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    padding: 25px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    font-family: 'Poppins', sans-serif;
+    color: white;
+    text-align: center;
+    min-width: 180px;
+    flex: 1;
+    max-width: 250px;
+}
+
+.room-btn:hover {
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.room-btn h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.room-btn p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    line-height: 1.3;
+}
+
+.join-room-input {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.join-room-input input {
+    width: 200px;
+    padding: 15px 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+}
+
+.join-room-input input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.join-room-input input:focus {
+    outline: none;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Room Lobby */
+#room-info {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.room-code {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, #fff, #f0f0f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 3px;
+    font-family: 'Courier New', monospace;
+}
+
+#lobby-status {
+    font-size: 1.1rem;
+    margin: 20px 0;
+    opacity: 0.9;
+}
+
+.players-list {
+    margin: 30px 0;
+}
+
+.players-list h3 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+#players-container {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    min-height: 60px;
+}
+
+.player-item {
+    padding: 8px 0;
+    font-size: 1rem;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.player-item:last-child {
+    border-bottom: none;
+}
+
+#start-online-game:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#start-online-game:disabled:hover {
+    transform: none;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Online Game Status */
+.waiting-message {
+    background: rgba(255, 193, 7, 0.2);
+    border: 1px solid rgba(255, 193, 7, 0.4);
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin: 20px 0;
+    font-size: 1rem;
+    backdrop-filter: blur(10px);
+}
+
+.turn-waiting {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
 /* Utility Classes */
 .hidden {
     display: none !important;
@@ -363,6 +563,21 @@ body {
     #question-text {
         font-size: 1.1rem;
     }
+    
+    .mode-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .room-options {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .room-code {
+        font-size: 1.5rem;
+        letter-spacing: 2px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -376,5 +591,28 @@ body {
     
     .container {
         padding: 15px;
+    }
+    
+    .mode-btn {
+        min-width: auto;
+        width: 100%;
+        max-width: none;
+        padding: 25px 20px;
+    }
+    
+    .room-btn {
+        min-width: auto;
+        width: 100%;
+        max-width: none;
+    }
+    
+    .join-room-input input {
+        width: 180px;
+        font-size: 1rem;
+    }
+    
+    .room-code {
+        font-size: 1.3rem;
+        letter-spacing: 1px;
     }
 }
