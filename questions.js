@@ -524,7 +524,11 @@ function getQuestionsForCategory(round, category, relationshipType) {
 
 // Updated function for script.js to use
 function getRandomQuestion(category, relationshipType, round) {
+    console.log(`getRandomQuestion called with: category=${category}, relationshipType=${relationshipType}, round=${round}`);
+    
     const questions = getQuestionsForCategory(round, category, relationshipType);
+    
+    console.log(`Found ${questions.length} questions for this combination`);
     
     if (questions.length === 0) {
         console.error(`No questions available for Round ${round}, Category ${category}, Relationship ${relationshipType}`);
@@ -532,7 +536,9 @@ function getRandomQuestion(category, relationshipType, round) {
     }
     
     // Return a random question from the available set
-    return questions[Math.floor(Math.random() * questions.length)];
+    const selectedQuestion = questions[Math.floor(Math.random() * questions.length)];
+    console.log(`Selected question: ${selectedQuestion}`);
+    return selectedQuestion;
 }
 
 console.log('Questions database loaded with', Object.keys(questionsDatabase).length, 'rounds');
