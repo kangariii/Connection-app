@@ -158,33 +158,7 @@ function selectCategory(category) {
     }
 }
 
-function getRandomQuestion(category, relationshipType, round) {
-    // This will get questions from questions.js
-    // For now, using placeholder - we'll implement the full question system next
-    const placeholderQuestions = {
-        "Favorites": [
-            "What's your favorite way to spend a weekend?",
-            "What's your favorite childhood memory involving food?",
-            "What's your favorite place you've ever visited?"
-        ],
-        "Daily Life": [
-            "What does a typical morning look like for you?",
-            "What's one habit you're trying to develop?",
-            "How do you usually unwind after a long day?"
-        ],
-        "Fun Facts": [
-            "What's the most interesting thing you've learned recently?",
-            "What's a skill you'd love to master?",
-            "What's something most people don't know about you?"
-        ]
-    };
-    
-    const categoryQuestions = placeholderQuestions[category];
-    if (categoryQuestions && categoryQuestions.length > 0) {
-        return categoryQuestions[Math.floor(Math.random() * categoryQuestions.length)];
-    }
-    return null;
-}
+// Note: getRandomQuestion function is defined in questions.js
 
 function displayQuestion(category, question) {
     // Hide category selection
