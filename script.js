@@ -448,6 +448,7 @@ async function startOnlineGame() {
                 const connectedPlayers = Object.values(roomData.players).filter(p => p.connected);
                 if (connectedPlayers.length < 2) {
                     document.getElementById('lobby-status').textContent = 'Waiting for other player to join...';
+                    document.getElementById('start-online-game').disabled = true;
                     return;
                 }
             } else {
