@@ -43,6 +43,7 @@ function createRoom(roomCode, hostPlayerId, relationshipType) {
                 playerNumber: 1,
                 name: '',
                 connected: true,
+                ready: false,
                 joinedAt: firebase.database.ServerValue.TIMESTAMP
             }
         },
@@ -63,6 +64,7 @@ function joinRoom(roomCode, playerId, playerName) {
         playerNumber: 2,
         name: playerName,
         connected: true,
+        ready: false,
         joinedAt: firebase.database.ServerValue.TIMESTAMP
     });
 }
@@ -108,7 +110,10 @@ function listenToMessages(roomCode, callback) {
 function disconnectPlayer(roomCode, playerId) {
     if (!isFirebaseConnected) return Promise.resolve();
     
-    return database.ref(`rooms/${roomCode}/players/${playerId}/connected`).set(false);
+    return database.ref(`rooms/${roomCode}/players/${playerId}`).update({
+        connected: false,
+        ready: false
+    });
 }
 
 console.log('Firebase configuration loaded');

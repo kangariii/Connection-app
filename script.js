@@ -16,6 +16,7 @@ let roomPlayers = [];
 let gameState = null;
 let roomListener = null;
 let messagesListener = null;
+let isPlayerReady = false; // Track if current player is ready
 
 // Round configurations with categories for each round
 const roundConfigs = {
@@ -159,6 +160,9 @@ function displayCategories(categories) {
 }
 
 function selectCategory(category) {
+    console.log(`Player ${currentPlayer} selected category: ${category}`);
+    
+    // Get a random question from this category for current relationship and round
     const question = getRandomQuestion(category, currentRelationshipType, currentRound);
     
     if (question) {
@@ -180,8 +184,6 @@ function selectCategory(category) {
     }
 }
 
-// Note: getRandomQuestion function is defined in questions.js
-
 function displayQuestion(category, question) {
     // Hide category selection
     document.getElementById('category-selection').style.display = 'none';
@@ -192,6 +194,8 @@ function displayQuestion(category, question) {
     // Set question content
     document.getElementById('question-category').textContent = category;
     document.getElementById('question-text').textContent = question;
+    
+    console.log(`Displaying question: ${question}`);
 }
 
 function nextTurn() {
@@ -274,6 +278,7 @@ function restartGame() {
     playerNumber = 0;
     roomPlayers = [];
     gameState = null;
+    isPlayerReady = false;
     
     // Clear input fields
     document.getElementById('player1-name').value = '';
@@ -351,7 +356,7 @@ async function joinGameRoom() {
         const yourName = document.getElementById('your-name').value.trim() || 'Player 2';
         await joinRoom(roomCode, playerId, yourName);
         setupRoomListeners();
-        document.getElementById('lobby-status').textContent = 'Joined room! Waiting for host to start...';
+        document.getElementById('lobby-status').textContent = 'Joined room! Enter your name and click "Begin Journey" when ready.';
     } catch (error) {
         console.error('Failed to join room:', error);
         document.getElementById('lobby-status').textContent = 'Failed to join room. Please check the code and try again.';
@@ -391,20 +396,27 @@ function handleRoomUpdate(roomData) {
     const playerList = Object.values(players).filter(p => p.connected);
     
     // Update players display
-    updatePlayersDisplay(playerList.map(p => p.name || `Player ${p.playerNumber}`));
+    updatePlayersDisplay(playerList.map(p => ({
+        name: p.name || `Player ${p.playerNumber}`,
+        ready: p.ready || false
+    })));
     
     // Check if both players are connected
     if (playerList.length >= 2) {
-        document.getElementById('lobby-status').textContent = 'Both players connected! Ready to start.';
-        document.getElementById('start-online-game').disabled = false;
+        // Check if both players are ready
+        const readyPlayers = playerList.filter(p => p.ready);
+        if (readyPlayers.length >= 2) {
+            // Both players are ready, start the game
+            if (roomData.gameState && roomData.gameState.gameStarted) {
+                receiveGameState(roomData.gameState);
+            }
+        } else {
+            document.getElementById('lobby-status').textContent = `Waiting for ${2 - readyPlayers.length} player(s) to be ready...`;
+            document.getElementById('start-online-game').disabled = false;
+        }
     } else {
         document.getElementById('lobby-status').textContent = 'Waiting for other player to join...';
         document.getElementById('start-online-game').disabled = true;
-    }
-    
-    // Handle game state updates
-    if (roomData.gameState && roomData.gameState.gameStarted) {
-        receiveGameState(roomData.gameState);
     }
 }
 
@@ -430,7 +442,12 @@ function updatePlayersDisplay(players) {
     players.forEach((player, index) => {
         const playerDiv = document.createElement('div');
         playerDiv.className = 'player-item';
-        playerDiv.textContent = `${index + 1}. ${player}`;
+        const readyText = player.ready ? ' ✓ Ready' : ' - Not Ready';
+        playerDiv.textContent = `${index + 1}. ${player.name}${readyText}`;
+        if (player.ready) {
+            playerDiv.style.color = '#4CAF50';
+            playerDiv.style.fontWeight = '600';
+        }
         container.appendChild(playerDiv);
     });
 }
@@ -442,77 +459,61 @@ async function startOnlineGame() {
         return;
     }
     
-    // Check if both players are connected
+    // Check if Firebase is connected
     if (!isFirebaseConnected) {
         alert('Not connected to Firebase. Please refresh and try again.');
         return;
     }
     
     try {
+        // Mark this player as ready
+        isPlayerReady = true;
+        await database.ref(`rooms/${roomCode}/players/${playerId}`).update({
+            name: yourName,
+            ready: true
+        });
+        
+        // Check if both players are ready
         const roomSnapshot = await database.ref(`rooms/${roomCode}`).once('value');
         const roomData = roomSnapshot.val();
+        
         if (roomData && roomData.players) {
-            const connectedPlayers = Object.values(roomData.players).filter(p => p.connected);
-            if (connectedPlayers.length < 2) {
-                document.getElementById('lobby-status').textContent = 'Waiting for other player to join...';
+            const players = Object.values(roomData.players);
+            const readyPlayers = players.filter(p => p.connected && p.ready);
+            
+            if (readyPlayers.length >= 2) {
+                // Both players are ready, initialize game state
+                gameState = {
+                    relationshipType: currentRelationshipType,
+                    currentRound: 1,
+                    currentPlayer: 1,
+                    roundTurns: 0,
+                    gameStarted: true,
+                    player1Name: players.find(p => p.playerNumber === 1)?.name || 'Player 1',
+                    player2Name: players.find(p => p.playerNumber === 2)?.name || 'Player 2'
+                };
+                
+                // Update names
+                player1Name = gameState.player1Name;
+                player2Name = gameState.player2Name;
+                
+                // Only player 1 (host) updates the game state in Firebase
+                if (playerNumber === 1) {
+                    await syncGameState();
+                }
+                
+                // Start the game locally
+                startRound(1);
+                
+                document.getElementById('lobby-status').textContent = 'Game starting...';
+            } else {
+                document.getElementById('lobby-status').textContent = 'Waiting for other player to be ready...';
                 document.getElementById('start-online-game').disabled = true;
-                return;
             }
-        } else {
-            alert('Room not found or no players connected.');
-            return;
         }
     } catch (error) {
-        console.error('Failed to check room status:', error);
-        alert('Failed to verify room status. Please try again.');
-        return;
-    }
-    
-    // Update player name in Firebase
-    if (isFirebaseConnected) {
-        try {
-            await database.ref(`rooms/${roomCode}/players/${playerId}/name`).set(yourName);
-        } catch (error) {
-            console.error('Failed to update player name:', error);
-        }
-    }
-    
-    // Initialize online game state
-    gameState = {
-        relationshipType: currentRelationshipType,
-        currentRound: 1,
-        currentPlayer: 1,
-        roundTurns: 0,
-        gameStarted: true,
-        player1Name: playerNumber === 1 ? yourName : 'Player 1',
-        player2Name: playerNumber === 2 ? yourName : 'Player 2'
-    };
-    
-    // Only host starts the game
-    if (playerNumber === 1) {
-        await syncGameState();
-    }
-    
-    startRound(1);
-}
-
-function handleWebSocketMessage(data) {
-    switch (data.type) {
-        case 'playerJoined':
-            handlePlayerJoined(data.playerName);
-            break;
-        case 'gameStart':
-            receiveGameState(data.gameState);
-            break;
-        case 'gameState':
-            receiveGameState(data.gameState);
-            break;
-        case 'questionSelected':
-            receiveQuestionSelection(data.category, data.question);
-            break;
-        case 'turnComplete':
-            receiveTurnComplete();
-            break;
+        console.error('Failed to start online game:', error);
+        alert('Failed to start game. Please try again.');
     }
 }
 
@@ -538,8 +539,10 @@ function receiveGameState(newGameState) {
     player1Name = gameState.player1Name;
     player2Name = gameState.player2Name;
     
-    // Update UI based on new state
-    updateGameDisplay();
+    // Start the game if it hasn't started yet
+    if (gameState.gameStarted) {
+        startRound(currentRound);
+    }
 }
 
 function updateGameDisplay() {
@@ -576,8 +579,7 @@ function receiveTurnComplete() {
     nextTurn();
 }
 
-// selectCategory function is now unified above to handle both online and local modes
-
+// Updated nextTurn function for online mode
 const originalNextTurn = nextTurn;
 function nextTurn() {
     if (isOnlineMode) {

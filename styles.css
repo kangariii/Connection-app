@@ -483,18 +483,30 @@ body {
     border-radius: 10px;
     padding: 20px;
     backdrop-filter: blur(10px);
-    min-height: 60px;
+    min-height: 80px;
 }
 
 .player-item {
-    padding: 8px 0;
+    padding: 10px 0;
     font-size: 1rem;
     font-weight: 500;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .player-item:last-child {
     border-bottom: none;
+}
+
+.player-ready {
+    color: #4CAF50 !important;
+    font-weight: 600 !important;
+}
+
+.player-not-ready {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 #start-online-game:disabled {
@@ -523,6 +535,25 @@ body {
 .turn-waiting {
     opacity: 0.6;
     pointer-events: none;
+}
+
+/* Ready Status Indicators */
+.ready-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-left: 10px;
+}
+
+.ready-indicator.ready {
+    background-color: #4CAF50;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.ready-indicator.not-ready {
+    background-color: rgba(255, 255, 255, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.5);
 }
 
 /* Utility Classes */
@@ -614,5 +645,11 @@ body {
     .room-code {
         font-size: 1.3rem;
         letter-spacing: 1px;
+    }
+    
+    .player-item {
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
     }
 }
