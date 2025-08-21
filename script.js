@@ -149,30 +149,18 @@ function displayCategories(categories) {
     const container = document.getElementById('categories-container');
     container.innerHTML = '';
     
-    console.log('Displaying categories:', categories);
-    
     categories.forEach(category => {
         const btn = document.createElement('button');
         btn.className = 'category-btn';
         btn.textContent = category;
-        btn.onclick = () => {
-            console.log('Category button clicked:', category);
-            selectCategory(category);
-        };
+        btn.onclick = () => selectCategory(category);
         container.appendChild(btn);
-        console.log('Added button for category:', category);
     });
 }
 
 function selectCategory(category) {
-    console.log(`Player ${currentPlayer} selected category: ${category}`);
-    console.log('Current relationship type:', currentRelationshipType);
-    console.log('Current round:', currentRound);
-    
     // Get a random question from this category for current relationship and round
     const question = getRandomQuestion(category, currentRelationshipType, currentRound);
-    
-    console.log('Retrieved question:', question);
     
     if (question) {
         displayQuestion(category, question);
@@ -185,28 +173,15 @@ function selectCategory(category) {
 // Note: getRandomQuestion function is defined in questions.js
 
 function displayQuestion(category, question) {
-    console.log(`displayQuestion called with category: ${category}, question: ${question}`);
-    
     // Hide category selection
-    const categorySelection = document.getElementById('category-selection');
-    console.log('Category selection element:', categorySelection);
-    categorySelection.style.display = 'none';
+    document.getElementById('category-selection').style.display = 'none';
     
     // Show question display
-    const questionDisplay = document.getElementById('question-display');
-    console.log('Question display element:', questionDisplay);
-    questionDisplay.classList.remove('hidden');
+    document.getElementById('question-display').classList.remove('hidden');
     
     // Set question content
-    const questionCategory = document.getElementById('question-category');
-    const questionText = document.getElementById('question-text');
-    console.log('Question category element:', questionCategory);
-    console.log('Question text element:', questionText);
-    
-    questionCategory.textContent = category;
-    questionText.textContent = question;
-    
-    console.log(`Successfully displayed question: ${question}`);
+    document.getElementById('question-category').textContent = category;
+    document.getElementById('question-text').textContent = question;
 }
 
 function nextTurn() {
