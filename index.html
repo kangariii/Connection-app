@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect & Discover</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="screen active">
+        <div class="container">
+            <h1 class="title">Connect & Discover</h1>
+            <p class="subtitle">Deepen your connection through meaningful questions</p>
+            <button onclick="showRelationshipSelection()" class="main-btn">Start Connecting</button>
+        </div>
+    </div>
+
+    <!-- Relationship Selection Screen -->
+    <div id="relationship-screen" class="screen">
+        <div class="container">
+            <h2 class="screen-title">What's your relationship?</h2>
+            <p class="screen-subtitle">This helps us choose the perfect questions for you</p>
+            
+            <div class="relationship-categories">
+                <!-- Family Relationships -->
+                <div class="category-section">
+                    <h3 class="category-title">Family</h3>
+                    <div class="relationship-grid">
+                        <button onclick="selectRelationship('brother-brother')" class="relationship-btn">Brother & Brother</button>
+                        <button onclick="selectRelationship('sister-sister')" class="relationship-btn">Sister & Sister</button>
+                        <button onclick="selectRelationship('brother-sister')" class="relationship-btn">Brother & Sister</button>
+                        <button onclick="selectRelationship('mother-son')" class="relationship-btn">Mother & Son</button>
+                        <button onclick="selectRelationship('mother-daughter')" class="relationship-btn">Mother & Daughter</button>
+                        <button onclick="selectRelationship('father-son')" class="relationship-btn">Father & Son</button>
+                        <button onclick="selectRelationship('father-daughter')" class="relationship-btn">Father & Daughter</button>
+                        <button onclick="selectRelationship('grandfather-grandson')" class="relationship-btn">Grandfather & Grandson</button>
+                        <button onclick="selectRelationship('grandfather-granddaughter')" class="relationship-btn">Grandfather & Granddaughter</button>
+                        <button onclick="selectRelationship('grandmother-grandson')" class="relationship-btn">Grandmother & Grandson</button>
+                        <button onclick="selectRelationship('grandmother-granddaughter')" class="relationship-btn">Grandmother & Granddaughter</button>
+                        <button onclick="selectRelationship('male-cousins')" class="relationship-btn">Male Cousins</button>
+                        <button onclick="selectRelationship('female-cousins')" class="relationship-btn">Female Cousins</button>
+                        <button onclick="selectRelationship('mixed-cousins')" class="relationship-btn">Male & Female Cousins</button>
+                    </div>
+                </div>
+
+                <!-- Romantic Relationships -->
+                <div class="category-section">
+                    <h3 class="category-title">Romantic</h3>
+                    <div class="relationship-grid">
+                        <button onclick="selectRelationship('new-dating')" class="relationship-btn">New Dating Couple</button>
+                        <button onclick="selectRelationship('long-term-partners')" class="relationship-btn">Long-term Partners</button>
+                        <button onclick="selectRelationship('engaged')" class="relationship-btn">Engaged Couple</button>
+                        <button onclick="selectRelationship('married')" class="relationship-btn">Married Couple</button>
+                    </div>
+                </div>
+
+                <!-- Friends -->
+                <div class="category-section">
+                    <h3 class="category-title">Friends</h3>
+                    <div class="relationship-grid">
+                        <button onclick="selectRelationship('best-friends-same')" class="relationship-btn">Best Friends (Same Gender)</button>
+                        <button onclick="selectRelationship('best-friends-different')" class="relationship-btn">Best Friends (Different Gender)</button>
+                        <button onclick="selectRelationship('new-friends')" class="relationship-btn">New Friends</button>
+                        <button onclick="selectRelationship('childhood-friends')" class="relationship-btn">Childhood Friends Reconnecting</button>
+                        <button onclick="selectRelationship('work-friends')" class="relationship-btn">Work Friends</button>
+                        <button onclick="selectRelationship('online-friends')" class="relationship-btn">Online Friends Meeting IRL</button>
+                    </div>
+                </div>
+
+                <!-- Other -->
+                <div class="category-section">
+                    <h3 class="category-title">Other</h3>
+                    <div class="relationship-grid">
+                        <button onclick="selectRelationship('colleagues')" class="relationship-btn">Colleagues</button>
+                        <button onclick="selectRelationship('mentor-mentee')" class="relationship-btn">Mentor & Mentee</button>
+                        <button onclick="selectRelationship('roommates')" class="relationship-btn">Roommates</button>
+                        <button onclick="selectRelationship('neighbors')" class="relationship-btn">Neighbors</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Setup Screen -->
+    <div id="setup-screen" class="screen">
+        <div class="container">
+            <h2 class="screen-title">Player Setup</h2>
+            <div class="player-inputs">
+                <div class="input-group">
+                    <label for="player1-name">Player 1 Name:</label>
+                    <input type="text" id="player1-name" placeholder="Enter your name">
+                </div>
+                <div class="input-group">
+                    <label for="player2-name">Player 2 Name:</label>
+                    <input type="text" id="player2-name" placeholder="Enter your name">
+                </div>
+            </div>
+            <button onclick="startGame()" class="main-btn">Begin Journey</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+        <div class="container">
+            <!-- Round Info -->
+            <div class="round-header">
+                <h2 id="round-title">Round 1 - Getting Started</h2>
+                <p id="round-subtitle">Choose a category and draw a question</p>
+            </div>
+
+            <!-- Current Turn Info -->
+            <div class="turn-info">
+                <p id="current-turn" class="turn-text">Player 1's turn to choose and ask</p>
+            </div>
+
+            <!-- Category Selection -->
+            <div id="category-selection" class="category-selection">
+                <h3>Choose a category:</h3>
+                <div id="categories-container" class="categories-container">
+                    <!-- Categories will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Question Display -->
+            <div id="question-display" class="question-display hidden">
+                <div class="card">
+                    <h3 id="question-category">Category</h3>
+                    <p id="question-text">Question will appear here</p>
+                </div>
+                <button onclick="nextTurn()" class="main-btn">Answer Complete</button>
+            </div>
+
+            <!-- Round Complete -->
+            <div id="round-complete" class="round-complete hidden">
+                <h3>Round Complete!</h3>
+                <p>Ready for the next round?</p>
+                <button onclick="nextRound()" class="main-btn">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Complete Screen -->
+    <div id="complete-screen" class="screen">
+        <div class="container">
+            <h2 class="screen-title">Journey Complete!</h2>
+            <p class="screen-subtitle">Thank you for connecting and discovering more about each other</p>
+            <div class="complete-message">
+                <p>You've shared meaningful moments and learned something new about each other.</p>
+                <p>The strongest connections are built one conversation at a time.</p>
+            </div>
+            <button onclick="restartGame()" class="main-btn">Start New Journey</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="questions.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

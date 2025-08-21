@@ -1,0 +1,154 @@
+CONNECTION & DISCOVER APP - PROJECT DOCUMENTATION
+=================================================
+
+OVERVIEW
+--------
+A relationship connection app designed to help any two people (family, friends, romantic partners, colleagues) deepen their connection through progressively meaningful questions. Features 5 rounds with 15 unique categories and relationship-specific question sets.
+
+TECH STACK
+----------
+- Frontend: Vanilla HTML/CSS/JavaScript (no frameworks)
+- Styling: Glassmorphism design with animated gradient backgrounds
+- Font: Poppins from Google Fonts
+- Database: Local JavaScript objects (Firebase ready for future multiplayer)
+- Hosting: GitHub Pages compatible
+- Development: GitHub Desktop workflow
+
+FILE STRUCTURE
+--------------
+Connection-App/
+├── index.html          # Single-page app with all game screens
+├── script.js           # Core game logic & screen management
+├── styles.css          # Glassmorphism design & responsive styling  
+├── config.js           # Firebase configuration (future use)
+├── questions.js        # Comprehensive questions database
+├── PROJECT_INFO.txt    # This documentation file
+└── QUICK_HELP.txt     # Development commands & tips
+
+GAME FLOW
+---------
+1. Welcome Screen
+2. Relationship Selection (15+ specific relationship types)
+3. Player Setup (names input)
+4. 5 Rounds of Questions:
+   - Round 1: Getting Started (Favorites, Daily Life, Fun Facts)
+   - Round 2: Personal Preferences (Choices, Experiences, Personality)  
+   - Round 3: Values & Perspectives (Beliefs, Relationships, Growth)
+   - Round 4: Deeper Connections (Memories, Emotions, Dreams)
+   - Round 5: Most Vulnerable (Reflections, Vulnerabilities, Future)
+5. Game Complete Screen
+
+ROUND STRUCTURE
+---------------
+Each round:
+- 3 unique categories to choose from
+- Player 1 picks category, draws question, asks Player 2
+- Player 2 picks category, draws question, asks Player 1  
+- Questions get progressively deeper each round
+- Total: 2 questions per round, 10 questions per game
+
+RELATIONSHIP TYPES
+------------------
+Family:
+- Brother & Brother, Sister & Sister, Brother & Sister
+- Mother & Son, Mother & Daughter, Father & Son, Father & Daughter
+- Grandfather & Grandson, Grandfather & Granddaughter
+- Grandmother & Grandson, Grandmother & Granddaughter
+- Male Cousins, Female Cousins, Male & Female Cousins
+
+Romantic:
+- New Dating Couple, Long-term Partners, Engaged Couple, Married Couple
+
+Friends:
+- Best Friends (Same Gender), Best Friends (Different Gender)
+- New Friends, Childhood Friends Reconnecting, Work Friends, Online Friends Meeting IRL
+
+Other:
+- Colleagues, Mentor & Mentee, Roommates, Neighbors
+
+QUESTIONS DATABASE
+------------------
+Structure: Round → Category → Relationship Type → Questions Array
+- 5 rounds × 3 categories = 15 total category sets
+- 4 question types per category: universal, family, romantic, friends
+- ~1,000+ total questions across all combinations
+- Smart selection based on relationship type
+- Fallback to universal questions for broader compatibility
+
+KEY FEATURES
+------------
+✓ Relationship-specific question curation
+✓ Progressive depth across 5 rounds
+✓ Turn-based interaction (both players participate equally)
+✓ Glassmorphism UI with animated gradients
+✓ Mobile responsive design
+✓ Local storage ready (no server required)
+✓ Firebase integration ready for multiplayer
+✓ Category-based question organization
+
+DESIGN PRINCIPLES
+-----------------
+- Beautiful glassmorphism aesthetic matching existing app style
+- Smooth animations and transitions
+- Clear visual hierarchy and user flow
+- Mobile-first responsive design
+- Accessibility considerations
+- Intuitive navigation
+
+DEVELOPMENT WORKFLOW
+--------------------
+1. Edit files locally
+2. Test by opening index.html in browser
+3. Use multiple browser tabs to simulate multiplayer
+4. Commit/push via GitHub Desktop
+5. Auto-deploy to GitHub Pages (2-3 minutes)
+6. Test live version
+
+TESTING CHECKLIST
+------------------
+□ All relationship types load correctly
+□ All 15 categories display proper questions
+□ Turn switching works between players
+□ Round progression functions correctly
+□ Game completion and restart work
+□ Mobile responsive on different screen sizes
+□ Questions are appropriate for relationship type
+□ No duplicate questions within same game session
+
+FUTURE ENHANCEMENTS
+-------------------
+- Firebase multiplayer synchronization
+- Question history tracking (avoid repeats)
+- Custom relationship types
+- Question favoriting system
+- Share memorable questions feature
+- Analytics on most popular categories
+- Audio question reading
+- Multiple language support
+
+TECHNICAL NOTES
+---------------
+- All state managed in JavaScript variables
+- No external dependencies beyond Firebase (optional)
+- Questions loaded from static JavaScript object
+- Screens managed via CSS classes and JavaScript
+- Mobile responsive using CSS Grid and Flexbox
+- Cross-browser compatible
+
+CUSTOMIZATION POINTS
+--------------------
+- Easy to add new relationship types in questions.js
+- Simple to add new categories for rounds
+- Straightforward to modify question sets
+- Easy to adjust number of rounds or questions per round
+- CSS variables make theme changes simple
+
+PERFORMANCE
+-----------
+- Lightweight: ~50KB total bundle size
+- Fast loading: no external API calls
+- Smooth animations: CSS transforms and transitions
+- Efficient: minimal DOM manipulation
+- Battery friendly: no continuous background processes
+
+This app builds on the successful technical foundation of the Dating-App while focusing on authentic connection rather than gamification.

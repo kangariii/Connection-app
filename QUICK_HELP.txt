@@ -1,0 +1,139 @@
+CONNECTION & DISCOVER APP - QUICK DEVELOPMENT HELP
+=====================================================
+
+GETTING STARTED
+---------------
+1. Create new repository: "Connection-App" (or your preferred name)
+2. Copy all files into repository folder
+3. Add your Firebase config to config.js (optional for now)
+4. Open index.html in browser to test locally
+5. Use GitHub Desktop to commit/push changes
+6. Enable GitHub Pages for auto-deployment
+
+LOCAL TESTING
+-------------
+- Open index.html directly in browser
+- Use multiple tabs to test multiplayer interaction
+- Test different relationship types and question flows
+- Check mobile responsiveness with browser dev tools
+- Use console (F12) to debug any issues
+
+DEVELOPMENT COMMANDS
+-------------------
+- Edit files → Save → Refresh browser (instant testing)
+- GitHub Desktop: Commit → Push → Live in 2-3 minutes
+- Test locally first, then deploy to live
+
+COMMON DEVELOPMENT TASKS
+------------------------
+
+Add New Relationship Type:
+1. Add button in index.html relationship-screen section
+2. Add case in questions.js relationship mapping arrays
+3. Test that appropriate questions load
+
+Add New Questions:
+1. Edit questions.js
+2. Find correct Round → Category → Relationship Type
+3. Add questions to appropriate array
+4. Test with that relationship type
+
+Modify Categories:
+1. Edit roundConfigs in script.js
+2. Update corresponding sections in questions.js
+3. Test category display and question loading
+
+Change Styling:
+1. Edit styles.css
+2. Maintain glassmorphism aesthetic
+3. Test on mobile and desktop
+
+DEBUGGING TIPS
+--------------
+- Check browser console for errors (F12)
+- Use console.log() in script.js for debugging
+- Test each relationship type individually
+- Verify questions load for all categories
+- Check mobile responsive breakpoints
+
+FILE EDIT FREQUENCY
+-------------------
+Most Common Edits:
+- questions.js (adding new questions)
+- styles.css (styling adjustments)
+- script.js (functionality changes)
+
+Rare Edits:
+- index.html (structural changes)
+- config.js (only for Firebase setup)
+
+TESTING CHECKLIST
+------------------
+Before Committing:
+□ All relationship types work
+□ All categories show questions
+□ Turn switching functions
+□ Round progression works
+□ Mobile responsive
+□ No console errors
+□ Game completes properly
+
+Quick Test Sequence:
+1. Pick any relationship type
+2. Enter player names
+3. Play through one complete round
+4. Check question quality and appropriateness
+5. Test on mobile view
+
+FIREBASE SETUP (FUTURE)
+-----------------------
+When ready for multiplayer:
+1. Create Firebase project
+2. Enable Realtime Database
+3. Update config.js with your credentials
+4. Uncomment Firebase import lines
+5. Add multiplayer sync logic
+
+GITHUB PAGES SETUP
+------------------
+1. Repository Settings → Pages
+2. Source: Deploy from branch
+3. Branch: main (or master)
+4. Folder: / (root)
+5. Save → Live URL provided
+
+PERFORMANCE OPTIMIZATION
+------------------------
+- Images: Use WebP format, compress
+- CSS: Minimize unused styles
+- JS: Remove console.logs before production
+- Test loading speed on slower connections
+
+COMMON ISSUES
+-------------
+Issue: Questions not showing
+Fix: Check relationship type mapping in questions.js
+
+Issue: Styling broken on mobile
+Fix: Check CSS media queries and viewport meta tag
+
+Issue: Firebase errors
+Fix: Verify config.js credentials and database rules
+
+Issue: GitHub Pages not updating
+Fix: Clear browser cache, check repository settings
+
+BACKUP STRATEGY
+---------------
+- GitHub automatically backs up code
+- Download repository zip occasionally
+- Test major changes on separate branch first
+
+COLLABORATION
+-------------
+- Use clear commit messages
+- Test before pushing to main branch
+- Document any breaking changes
+- Keep PROJECT_INFO.txt updated
+
+This workflow maintains the same development pattern as your Dating-App for comfortable iteration and testing.
