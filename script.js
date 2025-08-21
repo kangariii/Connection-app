@@ -159,11 +159,21 @@ function displayCategories(categories) {
 }
 
 function selectCategory(category) {
-    // Get a random question from this category for current relationship and round
     const question = getRandomQuestion(category, currentRelationshipType, currentRound);
     
     if (question) {
         displayQuestion(category, question);
+        
+        // Notify other player via Firebase if in online mode
+        if (isOnlineMode && isFirebaseConnected) {
+            sendMessage(roomCode, 'questionSelected', {
+                category: category,
+                question: question,
+                playerId: playerId
+            }).catch(error => {
+                console.error('Failed to send question selection:', error);
+            });
+        }
     } else {
         console.error('No question found for category:', category);
         alert('Sorry, no questions available for this category. Please try another.');
@@ -429,6 +439,28 @@ async function startOnlineGame() {
         return;
     }
     
+    // Check if both players are connected
+    if (isFirebaseConnected) {
+        try {
+            const roomSnapshot = await database.ref(`rooms/${roomCode}`).once('value');
+            const roomData = roomSnapshot.val();
+            if (roomData && roomData.players) {
+                const connectedPlayers = Object.values(roomData.players).filter(p => p.connected);
+                if (connectedPlayers.length < 2) {
+                    alert('Please wait for both players to join before starting the game.');
+                    return;
+                }
+            } else {
+                alert('Room not found or no players connected.');
+                return;
+            }
+        } catch (error) {
+            console.error('Failed to check room status:', error);
+            alert('Failed to verify room status. Please try again.');
+            return;
+        }
+    }
+    
     // Update player name in Firebase
     if (isFirebaseConnected) {
         try {
@@ -537,30 +569,7 @@ function receiveTurnComplete() {
     nextTurn();
 }
 
-// Override existing functions for online mode
-const originalSelectCategory = selectCategory;
-function selectCategory(category) {
-    if (isOnlineMode) {
-        const question = getRandomQuestion(category, currentRelationshipType, currentRound);
-        
-        if (question) {
-            displayQuestion(category, question);
-            
-            // Notify other player via Firebase
-            if (isFirebaseConnected) {
-                sendMessage(roomCode, 'questionSelected', {
-                    category: category,
-                    question: question,
-                    playerId: playerId
-                }).catch(error => {
-                    console.error('Failed to send question selection:', error);
-                });
-            }
-        }
-    } else {
-        originalSelectCategory(category);
-    }
-}
+// selectCategory function is now unified above to handle both online and local modes
 
 const originalNextTurn = nextTurn;
 function nextTurn() {
