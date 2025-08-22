@@ -542,16 +542,9 @@ function receiveGameState(newGameState) {
     if (gameState.gameStarted && document.getElementById('game-screen').classList.contains('active') === false) {
         startRound(currentRound);
     } else if (gameState.gameStarted) {
-        // Check if round should be completed
-        console.log(`receiveGameState checking completion: roundTurns=${roundTurns}, roundTurns >= 2 is ${roundTurns >= 2}`);
-        if (roundTurns >= 2) {
-            console.log('receiveGameState calling completeRound()');
-            completeRound();
-        } else {
-            console.log('receiveGameState calling updateGameDisplay()');
-            // Just update the display without restarting the round
-            updateGameDisplay();
-        }
+        // Just update the display - let nextTurn() handle round completion
+        console.log('receiveGameState calling updateGameDisplay()');
+        updateGameDisplay();
     }
 }
 
