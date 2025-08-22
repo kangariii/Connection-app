@@ -17,6 +17,7 @@ let gameState = null;
 let roomListener = null;
 let messagesListener = null;
 let isPlayerReady = false; // Track if current player is ready
+let isUpdatingState = false; // Prevent concurrent state updates
 
 // Round configurations with categories for each round
 const roundConfigs = {
@@ -78,14 +79,14 @@ function showJoinGame() {
     showScreen('join-screen');
 }
 
-function selectRelationship(relationshipType) {
+function selectRelationship(relationshipType, buttonElement) {
     currentRelationshipType = relationshipType;
     console.log('Selected relationship:', relationshipType);
     
     // Visual feedback for selection
     const relationshipBtns = document.querySelectorAll('.relationship-btn');
     relationshipBtns.forEach(btn => btn.classList.remove('selected'));
-    event.target.classList.add('selected');
+    buttonElement.classList.add('selected');
     
     // Brief delay then create game room
     setTimeout(() => {
@@ -203,26 +204,45 @@ function displayQuestion(category, question) {
 }
 
 function nextTurn() {
+    console.log(`nextTurn called: isOnlineMode=${isOnlineMode}, roundTurns before increment: ${roundTurns}`);
+    
     // First increment roundTurns to track completed turns
     roundTurns++;
+    console.log(`roundTurns after increment: ${roundTurns}`);
     
     if (roundTurns >= 2) {
         // Round is complete (both players have asked)
+        console.log('Round complete - calling completeRound()');
         completeRound();
+        
+        // Only sync state in online mode, don't duplicate the logic
+        if (isOnlineMode) {
+            gameState.roundTurns = roundTurns;
+            syncGameState();
+        }
     } else {
         // Switch to other player
         currentPlayer = currentPlayer === 1 ? 2 : 1;
+        console.log(`Switched to player ${currentPlayer}`);
         
-        // Update turn display
-        updateTurnDisplay();
-        
-        // Show category selection again
-        document.getElementById('category-selection').style.display = 'block';
-        document.getElementById('question-display').classList.add('hidden');
-        
-        // Display categories for this round again
-        const roundConfig = roundConfigs[currentRound];
-        displayCategories(roundConfig.categories);
+        if (isOnlineMode) {
+            // In online mode, only the current player should update state
+            gameState.currentPlayer = currentPlayer;
+            gameState.roundTurns = roundTurns;
+            syncGameState();
+            updateGameDisplay();
+        } else {
+            // Update turn display for offline mode
+            updateTurnDisplay();
+            
+            // Show category selection again
+            document.getElementById('category-selection').style.display = 'block';
+            document.getElementById('question-display').classList.add('hidden');
+            
+            // Display categories for this round again
+            const roundConfig = roundConfigs[currentRound];
+            displayCategories(roundConfig.categories);
+        }
     }
 }
 
@@ -239,12 +259,30 @@ function completeRound() {
 }
 
 function nextRound() {
+    console.log(`nextRound called: currentRound=${currentRound}, isOnlineMode=${isOnlineMode}`);
+    
     if (currentRound >= 5) {
         // Game is complete
         completeGame();
     } else {
-        // Start next round
-        startRound(currentRound + 1);
+        // Increment round and reset turns
+        currentRound++;
+        roundTurns = 0;
+        currentPlayer = 1; // Always start new round with player 1
+        
+        if (isOnlineMode) {
+            // Update game state and sync
+            gameState.currentRound = currentRound;
+            gameState.roundTurns = roundTurns;
+            gameState.currentPlayer = currentPlayer;
+            syncGameState().then(() => {
+                // Only start the round locally for the person who clicked next
+                startRound(currentRound);
+            });
+        } else {
+            // Offline mode - start round directly
+            startRound(currentRound);
+        }
     }
 }
 
@@ -286,6 +324,7 @@ function restartGame() {
     roomPlayers = [];
     gameState = null;
     isPlayerReady = false;
+    isUpdatingState = false;
     
     // Clear input fields
     document.getElementById('player1-name').value = '';
@@ -515,40 +554,54 @@ async function startOnlineGame() {
 }
 
 async function syncGameState() {
-    if (!isOnlineMode || !isFirebaseConnected) return;
+    if (!isOnlineMode || !isFirebaseConnected) {
+        return Promise.resolve();
+    }
     
     try {
         await updateGameState(roomCode, gameState);
         console.log('Game state synced to Firebase');
+        return Promise.resolve();
     } catch (error) {
         console.error('Failed to sync game state:', error);
+        return Promise.reject(error);
     }
 }
 
 function receiveGameState(newGameState) {
-    console.log(`receiveGameState called. roundTurns from Firebase: ${newGameState.roundTurns}`);
+    console.log(`receiveGameState called. Current round: ${currentRound}, New round: ${newGameState.currentRound}, roundTurns: ${newGameState.roundTurns}`);
+    
+    const oldRound = currentRound;
     gameState = newGameState;
     
-    // Update local game variables
+    // Update local game variables from Firebase state
     currentRelationshipType = gameState.relationshipType;
     currentRound = gameState.currentRound;
     currentPlayer = gameState.currentPlayer;
     roundTurns = gameState.roundTurns;
-    console.log(`receiveGameState updated local roundTurns to: ${roundTurns}`);
+    console.log(`receiveGameState updated local state - Round: ${currentRound}, Player: ${currentPlayer}, Turns: ${roundTurns}`);
     player1Name = gameState.player1Name;
     player2Name = gameState.player2Name;
     
     // Start the game if it hasn't started yet and we're not already in a game
-    if (gameState.gameStarted && document.getElementById('game-screen').classList.contains('active') === false) {
+    if (gameState.gameStarted && !document.getElementById('game-screen').classList.contains('active')) {
         startRound(currentRound);
     } else if (gameState.gameStarted) {
-        // Just update the display - let nextTurn() handle round completion
-        console.log('receiveGameState calling updateGameDisplay()');
-        updateGameDisplay();
+        // Check if this is a new round (round number changed)
+        if (oldRound !== currentRound && currentRound > oldRound) {
+            console.log(`receiveGameState: New round detected (${oldRound} -> ${currentRound}), starting round`);
+            startRound(currentRound);
+        } else {
+            // Just update the display for the current round
+            console.log('receiveGameState calling updateGameDisplay()');
+            updateGameDisplay();
+        }
     }
 }
 
 function updateGameDisplay() {
+    console.log(`updateGameDisplay: currentRound=${currentRound}, currentPlayer=${currentPlayer}, roundTurns=${roundTurns}, playerNumber=${playerNumber}`);
+    
     // Update round display
     const roundConfig = roundConfigs[currentRound];
     if (roundConfig) {
@@ -559,24 +612,33 @@ function updateGameDisplay() {
     // Update turn display
     updateTurnDisplay();
     
+    // Check if round is complete first
+    if (roundTurns >= 2) {
+        console.log('updateGameDisplay: Round complete, showing round complete UI');
+        document.getElementById('category-selection').style.display = 'none';
+        document.getElementById('question-display').classList.add('hidden');
+        document.getElementById('round-complete').classList.remove('hidden');
+        return;
+    }
+    
     // Show appropriate UI based on whose turn it is
     const isMyTurn = (playerNumber === currentPlayer);
+    console.log(`updateGameDisplay: isMyTurn=${isMyTurn}`);
     
     if (isMyTurn) {
-        // Only show categories if we're not already displaying a question
+        // Only show categories if we're not already displaying a question and round isn't complete
         const questionDisplay = document.getElementById('question-display');
         if (questionDisplay.classList.contains('hidden')) {
+            console.log('updateGameDisplay: Showing category selection for my turn');
             document.getElementById('category-selection').style.display = 'block';
+            document.getElementById('round-complete').classList.add('hidden');
             displayCategories(roundConfig.categories);
         }
     } else {
         // Hide category selection if it's not my turn
+        console.log('updateGameDisplay: Hiding category selection - not my turn');
         document.getElementById('category-selection').style.display = 'none';
-        // Keep question display if it's showing, hide if not
-        const questionDisplay = document.getElementById('question-display');
-        if (questionDisplay.classList.contains('hidden')) {
-            // Show waiting message or appropriate state for non-active player
-        }
+        // Don't hide question display if it's showing a question from the other player
     }
 }
 
@@ -585,9 +647,16 @@ function receiveQuestionSelection(category, question) {
     displayQuestion(category, question);
 }
 
-
 function nextTurn() {
     console.log(`nextTurn called: isOnlineMode=${isOnlineMode}, roundTurns before increment: ${roundTurns}`);
+    
+    // Prevent concurrent updates in online mode
+    if (isOnlineMode && isUpdatingState) {
+        console.log('nextTurn: State update in progress, ignoring call');
+        return;
+    }
+    
+    isUpdatingState = true;
     
     // First increment roundTurns to track completed turns
     roundTurns++;
@@ -598,9 +667,14 @@ function nextTurn() {
         console.log('Round complete - calling completeRound()');
         completeRound();
         
+        // Only sync state in online mode, don't duplicate the logic
         if (isOnlineMode) {
             gameState.roundTurns = roundTurns;
-            syncGameState();
+            syncGameState().finally(() => {
+                isUpdatingState = false;
+            });
+        } else {
+            isUpdatingState = false;
         }
     } else {
         // Switch to other player
@@ -608,10 +682,14 @@ function nextTurn() {
         console.log(`Switched to player ${currentPlayer}`);
         
         if (isOnlineMode) {
+            // In online mode, update state and sync
             gameState.currentPlayer = currentPlayer;
             gameState.roundTurns = roundTurns;
-            syncGameState();
-            updateGameDisplay();
+            syncGameState().then(() => {
+                updateGameDisplay();
+            }).finally(() => {
+                isUpdatingState = false;
+            });
         } else {
             // Update turn display for offline mode
             updateTurnDisplay();
@@ -623,6 +701,10 @@ function nextTurn() {
             // Display categories for this round again
             const roundConfig = roundConfigs[currentRound];
             displayCategories(roundConfig.categories);
+            
+            isUpdatingState = false;
         }
     }
 }
+
+
