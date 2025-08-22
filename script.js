@@ -593,29 +593,43 @@ function receiveQuestionSelection(category, question) {
 }
 
 
-// Updated nextTurn function for online mode
-const originalNextTurn = nextTurn;
 function nextTurn() {
-    if (isOnlineMode) {
-        console.log(`ONLINE nextTurn called. roundTurns before increment: ${roundTurns}`);
-        // Update game state - increment turns first, then switch player if needed
-        roundTurns++;
-        console.log(`ONLINE roundTurns after increment: ${roundTurns}`);
-        gameState.roundTurns = roundTurns;
+    console.log(`nextTurn called: isOnlineMode=${isOnlineMode}, roundTurns before increment: ${roundTurns}`);
+    
+    // First increment roundTurns to track completed turns
+    roundTurns++;
+    console.log(`roundTurns after increment: ${roundTurns}`);
+    
+    if (roundTurns >= 2) {
+        // Round is complete (both players have asked)
+        console.log('Round complete - calling completeRound()');
+        completeRound();
         
-        if (roundTurns < 2) {
-            currentPlayer = currentPlayer === 1 ? 2 : 1;
-            gameState.currentPlayer = currentPlayer;
-        }
-        
-        if (roundTurns >= 2) {
-            completeRound();
+        if (isOnlineMode) {
+            gameState.roundTurns = roundTurns;
             syncGameState();
-        } else {
-            syncGameState();
-            updateGameDisplay();
         }
     } else {
-        originalNextTurn();
+        // Switch to other player
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        console.log(`Switched to player ${currentPlayer}`);
+        
+        if (isOnlineMode) {
+            gameState.currentPlayer = currentPlayer;
+            gameState.roundTurns = roundTurns;
+            syncGameState();
+            updateGameDisplay();
+        } else {
+            // Update turn display for offline mode
+            updateTurnDisplay();
+            
+            // Show category selection again
+            document.getElementById('category-selection').style.display = 'block';
+            document.getElementById('question-display').classList.add('hidden');
+            
+            // Display categories for this round again
+            const roundConfig = roundConfigs[currentRound];
+            displayCategories(roundConfig.categories);
+        }
     }
 }
