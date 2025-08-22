@@ -60,14 +60,20 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Screen Management Functions
 function showScreen(screenId) {
+    console.log(`showScreen() called with screenId: ${screenId}`);
+    
     // Hide all screens
     const screens = document.querySelectorAll('.screen');
+    console.log(`Found ${screens.length} screens to hide`);
     screens.forEach(screen => screen.classList.remove('active'));
     
     // Show target screen
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
         targetScreen.classList.add('active');
+        console.log(`Successfully showed screen: ${screenId}`);
+    } else {
+        console.error(`Screen with id '${screenId}' not found!`);
     }
 }
 
@@ -283,6 +289,8 @@ function completeGame() {
 }
 
 function restartGame() {
+    console.log('restartGame() called - starting cleanup and reset');
+    
     // Clean up Firebase listeners
     if (roomListener) {
         roomListener();
@@ -293,9 +301,11 @@ function restartGame() {
         messagesListener = null;
     }
     
-    // Disconnect from room
+    // Disconnect from room (non-blocking)
     if (isOnlineMode && roomCode && playerId) {
-        disconnectPlayer(roomCode, playerId);
+        disconnectPlayer(roomCode, playerId).catch(error => {
+            console.log('Error disconnecting player (ignored):', error);
+        });
     }
     
     // Reset all game state
@@ -331,9 +341,10 @@ function restartGame() {
     relationshipBtns.forEach(btn => btn.classList.remove('selected'));
     
     // Return to welcome screen
+    console.log('restartGame() - about to call showScreen(welcome-screen)');
     showScreen('welcome-screen');
     
-    console.log('Game restarted');
+    console.log('Game restarted - should now be on welcome screen');
 }
 
 // Multiplayer Functions
