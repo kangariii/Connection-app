@@ -228,6 +228,8 @@ function nextTurn() {
 
 function completeRound() {
     console.log(`Round ${currentRound} completed`);
+    console.trace('completeRound() called from:');
+    console.log(`completeRound: roundTurns=${roundTurns}, currentPlayer=${currentPlayer}, isOnlineMode=${isOnlineMode}`);
     
     // Hide question display
     document.getElementById('question-display').classList.add('hidden');
