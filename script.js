@@ -425,11 +425,6 @@ function handleFirebaseMessage(messageData) {
                 receiveQuestionSelection(messageData.data.category, messageData.data.question);
             }
             break;
-        case 'turnComplete':
-            if (messageData.data.playerId !== playerId) {
-                receiveTurnComplete();
-            }
-            break;
     }
 }
 
@@ -543,8 +538,13 @@ function receiveGameState(newGameState) {
     if (gameState.gameStarted && document.getElementById('game-screen').classList.contains('active') === false) {
         startRound(currentRound);
     } else if (gameState.gameStarted) {
-        // Just update the display without restarting the round
-        updateGameDisplay();
+        // Check if round should be completed
+        if (roundTurns >= 2) {
+            completeRound();
+        } else {
+            // Just update the display without restarting the round
+            updateGameDisplay();
+        }
     }
 }
 
@@ -585,24 +585,11 @@ function receiveQuestionSelection(category, question) {
     displayQuestion(category, question);
 }
 
-function receiveTurnComplete() {
-    // Another player completed their turn
-    nextTurn();
-}
 
 // Updated nextTurn function for online mode
 const originalNextTurn = nextTurn;
 function nextTurn() {
     if (isOnlineMode) {
-        // Notify other player that turn is complete via Firebase
-        if (isFirebaseConnected) {
-            sendMessage(roomCode, 'turnComplete', {
-                playerId: playerId
-            }).catch(error => {
-                console.error('Failed to send turn complete:', error);
-            });
-        }
-        
         // Update game state - increment turns first, then switch player if needed
         roundTurns++;
         gameState.roundTurns = roundTurns;
