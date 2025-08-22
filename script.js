@@ -174,6 +174,13 @@ function displayCategories(categories) {
 function selectCategory(category) {
     console.log(`Player ${currentPlayer} selected category: ${category}`);
     
+    // Validate it's this player's turn
+    if (isOnlineMode && playerNumber !== currentPlayer) {
+        console.log(`selectCategory: Not player ${playerNumber}'s turn (current turn: ${currentPlayer})`);
+        alert(`It's not your turn! Wait for Player ${currentPlayer} to finish.`);
+        return;
+    }
+    
     // Get a random question from this category for current relationship and round
     const question = getRandomQuestion(category, currentRelationshipType, currentRound);
     
@@ -200,48 +207,6 @@ function displayQuestion(category, question) {
     console.log(`Displaying question: ${question}`);
 }
 
-function nextTurn() {
-    console.log(`nextTurn called: isOnlineMode=${isOnlineMode}, roundTurns before increment: ${roundTurns}`);
-    
-    // First increment roundTurns to track completed turns
-    roundTurns++;
-    console.log(`roundTurns after increment: ${roundTurns}`);
-    
-    if (roundTurns >= 2) {
-        // Round is complete (both players have asked)
-        console.log('Round complete - calling completeRound()');
-        completeRound();
-        
-        // Only sync state in online mode, don't duplicate the logic
-        if (isOnlineMode) {
-            gameState.roundTurns = roundTurns;
-            syncGameState();
-        }
-    } else {
-        // Switch to other player
-        currentPlayer = currentPlayer === 1 ? 2 : 1;
-        console.log(`Switched to player ${currentPlayer}`);
-        
-        if (isOnlineMode) {
-            // In online mode, only the current player should update state
-            gameState.currentPlayer = currentPlayer;
-            gameState.roundTurns = roundTurns;
-            syncGameState();
-            updateGameDisplay();
-        } else {
-            // Update turn display for offline mode
-            updateTurnDisplay();
-            
-            // Show category selection again
-            document.getElementById('category-selection').style.display = 'block';
-            document.getElementById('question-display').classList.add('hidden');
-            
-            // Display categories for this round again
-            const roundConfig = roundConfigs[currentRound];
-            displayCategories(roundConfig.categories);
-        }
-    }
-}
 
 function completeRound() {
     console.log(`Round ${currentRound} completed`);
