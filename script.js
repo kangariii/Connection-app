@@ -420,9 +420,14 @@ function handleRoomUpdate(roomData) {
         // Check if both players are ready
         const readyPlayers = playerList.filter(p => p.ready);
         if (readyPlayers.length >= 2) {
-            // Both players are ready, start the game
+            // Both players are ready
             if (roomData.gameState && roomData.gameState.gameStarted) {
+                // Game already started, receive the game state
                 receiveGameState(roomData.gameState);
+            } else {
+                // Both ready but game not started yet - enable button and allow game start
+                document.getElementById('lobby-status').textContent = 'Both players ready! Click "Begin Journey" to start.';
+                document.getElementById('start-online-game').disabled = false;
             }
         } else {
             document.getElementById('lobby-status').textContent = `Waiting for ${2 - readyPlayers.length} player(s) to be ready...`;
@@ -518,7 +523,7 @@ async function startOnlineGame() {
                 document.getElementById('lobby-status').textContent = 'Game starting...';
             } else {
                 document.getElementById('lobby-status').textContent = 'Waiting for other player to be ready...';
-                document.getElementById('start-online-game').disabled = true;
+                // Don't disable the button - let handleRoomUpdate manage button state
             }
         }
     } catch (error) {
