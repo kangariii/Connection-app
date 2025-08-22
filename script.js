@@ -524,6 +524,7 @@ async function syncGameState() {
 }
 
 function receiveGameState(newGameState) {
+    console.log(`receiveGameState called. roundTurns from Firebase: ${newGameState.roundTurns}`);
     gameState = newGameState;
     
     // Update local game variables
@@ -531,6 +532,7 @@ function receiveGameState(newGameState) {
     currentRound = gameState.currentRound;
     currentPlayer = gameState.currentPlayer;
     roundTurns = gameState.roundTurns;
+    console.log(`receiveGameState updated local roundTurns to: ${roundTurns}`);
     player1Name = gameState.player1Name;
     player2Name = gameState.player2Name;
     
@@ -539,9 +541,12 @@ function receiveGameState(newGameState) {
         startRound(currentRound);
     } else if (gameState.gameStarted) {
         // Check if round should be completed
+        console.log(`receiveGameState checking completion: roundTurns=${roundTurns}, roundTurns >= 2 is ${roundTurns >= 2}`);
         if (roundTurns >= 2) {
+            console.log('receiveGameState calling completeRound()');
             completeRound();
         } else {
+            console.log('receiveGameState calling updateGameDisplay()');
             // Just update the display without restarting the round
             updateGameDisplay();
         }
@@ -590,8 +595,10 @@ function receiveQuestionSelection(category, question) {
 const originalNextTurn = nextTurn;
 function nextTurn() {
     if (isOnlineMode) {
+        console.log(`ONLINE nextTurn called. roundTurns before increment: ${roundTurns}`);
         // Update game state - increment turns first, then switch player if needed
         roundTurns++;
+        console.log(`ONLINE roundTurns after increment: ${roundTurns}`);
         gameState.roundTurns = roundTurns;
         
         if (roundTurns < 2) {
@@ -601,6 +608,7 @@ function nextTurn() {
         
         if (roundTurns >= 2) {
             completeRound();
+            syncGameState();
         } else {
             syncGameState();
             updateGameDisplay();
