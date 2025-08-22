@@ -185,6 +185,19 @@
                 <button onclick="nextTurn()" class="main-btn">Answer Complete</button>
             </div>
 
+            <!-- Waiting/Answering State -->
+            <div id="waiting-state" class="waiting-state hidden">
+                <div class="waiting-card">
+                    <h3 id="waiting-title">Listening & Answering</h3>
+                    <p id="waiting-message">Wait for the other player to ask their question, then share your answer!</p>
+                    <div class="waiting-animation">
+                        <div class="pulse-dot"></div>
+                        <div class="pulse-dot"></div>
+                        <div class="pulse-dot"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Round Complete -->
             <div id="round-complete" class="round-complete hidden">
                 <h3>Round Complete!</h3>

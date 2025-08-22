@@ -144,10 +144,18 @@ function startRound(roundNumber) {
     // Show game screen
     showScreen('game-screen');
     
-    // Show category selection, hide question display
-    document.getElementById('category-selection').style.display = 'block';
+    // Reset all display states
     document.getElementById('question-display').classList.add('hidden');
     document.getElementById('round-complete').classList.add('hidden');
+    document.getElementById('waiting-state').classList.add('hidden');
+    
+    // Show appropriate UI based on whose turn it is (for online mode)
+    if (isOnlineMode) {
+        updateGameDisplay();
+    } else {
+        // In offline mode, always show categories since players share the screen
+        document.getElementById('category-selection').style.display = 'block';
+    }
 }
 
 function updateTurnDisplay() {
@@ -582,6 +590,7 @@ function updateGameDisplay() {
     if (roundTurns >= 2) {
         console.log('updateGameDisplay: Round complete, showing round complete UI');
         document.getElementById('category-selection').style.display = 'none';
+        document.getElementById('waiting-state').classList.add('hidden');
         document.getElementById('question-display').classList.add('hidden');
         document.getElementById('round-complete').classList.remove('hidden');
         return;
@@ -600,16 +609,22 @@ function updateGameDisplay() {
         if (questionHidden) {
             console.log('updateGameDisplay: Showing category selection for my turn');
             document.getElementById('category-selection').style.display = 'block';
+            document.getElementById('waiting-state').classList.add('hidden');
             document.getElementById('round-complete').classList.add('hidden');
             displayCategories(roundConfig.categories);
         } else {
             console.log('updateGameDisplay: Question already displayed, not showing categories');
         }
     } else {
-        // Hide category selection if it's not my turn
-        console.log('updateGameDisplay: Hiding category selection - not my turn');
+        // Show waiting state when it's not my turn
+        console.log('updateGameDisplay: Showing waiting state - not my turn');
         document.getElementById('category-selection').style.display = 'none';
-        // Don't hide question display if it's showing a question from the other player
+        document.getElementById('waiting-state').classList.remove('hidden');
+        
+        // Update waiting message based on current player
+        const currentPlayerName = currentPlayer === 1 ? player1Name : player2Name;
+        const waitingMessage = `${currentPlayerName} is choosing a question to ask you. Get ready to share and listen!`;
+        document.getElementById('waiting-message').textContent = waitingMessage;
     }
 }
 
