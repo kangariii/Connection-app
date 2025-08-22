@@ -147,6 +147,7 @@ function startRound(roundNumber) {
 function updateTurnDisplay() {
     const currentPlayerName = currentPlayer === 1 ? player1Name : player2Name;
     const otherPlayerName = currentPlayer === 1 ? player2Name : player1Name;
+    console.log(`updateTurnDisplay: Player ${currentPlayer} (${currentPlayerName}) choosing question for ${otherPlayerName}`);
     document.getElementById('current-turn').textContent = 
         `${currentPlayerName}'s turn to choose and ask ${otherPlayerName}`;
 }
@@ -172,17 +173,7 @@ function selectCategory(category) {
     
     if (question) {
         displayQuestion(category, question);
-        
-        // Notify other player via Firebase if in online mode
-        if (isOnlineMode && isFirebaseConnected) {
-            sendMessage(roomCode, 'questionSelected', {
-                category: category,
-                question: question,
-                playerId: playerId
-            }).catch(error => {
-                console.error('Failed to send question selection:', error);
-            });
-        }
+        // Each player chooses their own question independently - no sharing needed
     } else {
         console.error('No question found for category:', category);
         alert('Sorry, no questions available for this category. Please try another.');
@@ -461,10 +452,9 @@ function handleRoomUpdate(roomData) {
 
 function handleFirebaseMessage(messageData) {
     switch (messageData.type) {
-        case 'questionSelected':
-            if (messageData.data.playerId !== playerId) {
-                receiveQuestionSelection(messageData.data.category, messageData.data.question);
-            }
+        // No message types currently needed - each player chooses independently
+        default:
+            console.log('Unknown message type:', messageData.type);
             break;
     }
 }
@@ -628,11 +618,16 @@ function updateGameDisplay() {
     if (isMyTurn) {
         // Only show categories if we're not already displaying a question and round isn't complete
         const questionDisplay = document.getElementById('question-display');
-        if (questionDisplay.classList.contains('hidden')) {
+        const questionHidden = questionDisplay.classList.contains('hidden');
+        console.log(`updateGameDisplay: My turn, question hidden: ${questionHidden}`);
+        
+        if (questionHidden) {
             console.log('updateGameDisplay: Showing category selection for my turn');
             document.getElementById('category-selection').style.display = 'block';
             document.getElementById('round-complete').classList.add('hidden');
             displayCategories(roundConfig.categories);
+        } else {
+            console.log('updateGameDisplay: Question already displayed, not showing categories');
         }
     } else {
         // Hide category selection if it's not my turn
@@ -642,10 +637,7 @@ function updateGameDisplay() {
     }
 }
 
-function receiveQuestionSelection(category, question) {
-    // Another player selected a question
-    displayQuestion(category, question);
-}
+// Removed receiveQuestionSelection - each player chooses their own question independently
 
 function nextTurn() {
     console.log(`nextTurn called: isOnlineMode=${isOnlineMode}, roundTurns before increment: ${roundTurns}`);
@@ -685,6 +677,10 @@ function nextTurn() {
             // In online mode, update state and sync
             gameState.currentPlayer = currentPlayer;
             gameState.roundTurns = roundTurns;
+            
+            // Hide previous player's question display
+            document.getElementById('question-display').classList.add('hidden');
+            
             syncGameState().then(() => {
                 updateGameDisplay();
             }).finally(() => {
