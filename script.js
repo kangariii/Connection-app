@@ -70,8 +70,12 @@ function showScreen(screenId) {
     }
 }
 
-function showRelationshipSelection() {
+function showCreateGame() {
     showScreen('relationship-screen');
+}
+
+function showJoinGame() {
+    showScreen('join-screen');
 }
 
 function selectRelationship(relationshipType) {
@@ -83,9 +87,9 @@ function selectRelationship(relationshipType) {
     relationshipBtns.forEach(btn => btn.classList.remove('selected'));
     event.target.classList.add('selected');
     
-    // Brief delay then move to mode selection
+    // Brief delay then create game room
     setTimeout(() => {
-        showScreen('mode-screen');
+        createGameRoom();
     }, 500);
 }
 
@@ -199,6 +203,7 @@ function displayQuestion(category, question) {
 }
 
 function nextTurn() {
+    // First increment roundTurns to track completed turns
     roundTurns++;
     
     if (roundTurns >= 2) {
@@ -300,21 +305,13 @@ function restartGame() {
 }
 
 // Multiplayer Functions
-function selectLocalMode() {
-    isOnlineMode = false;
-    showScreen('setup-screen');
-}
-
-function selectOnlineMode() {
-    isOnlineMode = true;
-    showScreen('room-screen');
-}
 
 function generateRoomCode() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 async function createGameRoom() {
+    isOnlineMode = true; // Set online mode
     roomCode = generateRoomCode();
     playerId = 'player-' + Math.random().toString(36).substring(2, 9);
     playerNumber = 1;
@@ -333,33 +330,29 @@ async function createGameRoom() {
     }
 }
 
-function showJoinRoom() {
-    document.getElementById('join-room-input').classList.remove('hidden');
-}
-
 async function joinGameRoom() {
     const inputCode = document.getElementById('room-code-input').value.trim().toUpperCase();
     if (!inputCode || inputCode.length !== 6) {
-        alert('Please enter a valid 6-character room code');
+        alert('Please enter a valid 6-character game code');
         return;
     }
     
+    isOnlineMode = true; // Set online mode
     roomCode = inputCode;
     playerId = 'player-' + Math.random().toString(36).substring(2, 9);
     playerNumber = 2;
     
     document.getElementById('room-code-display').textContent = roomCode;
-    document.getElementById('lobby-status').textContent = 'Joining room...';
+    document.getElementById('lobby-status').textContent = 'Joining game...';
     showScreen('lobby-screen');
     
     try {
-        const yourName = document.getElementById('your-name').value.trim() || 'Player 2';
-        await joinRoom(roomCode, playerId, yourName);
+        await joinRoom(roomCode, playerId, 'Player 2');
         setupRoomListeners();
-        document.getElementById('lobby-status').textContent = 'Joined room! Enter your name and click "Begin Journey" when ready.';
+        document.getElementById('lobby-status').textContent = 'Joined game! Enter your name and click "Begin Journey" when ready.';
     } catch (error) {
-        console.error('Failed to join room:', error);
-        document.getElementById('lobby-status').textContent = 'Failed to join room. Please check the code and try again.';
+        console.error('Failed to join game:', error);
+        document.getElementById('lobby-status').textContent = 'Failed to join game. Please check the code and try again.';
     }
 }
 
@@ -394,6 +387,11 @@ function setupRoomListeners() {
 function handleRoomUpdate(roomData) {
     const players = roomData.players || {};
     const playerList = Object.values(players).filter(p => p.connected);
+    
+    // Set relationship type from room data if not already set (for joining players)
+    if (roomData.relationshipType && !currentRelationshipType) {
+        currentRelationshipType = roomData.relationshipType;
+    }
     
     // Update players display
     updatePlayersDisplay(playerList.map(p => ({
@@ -500,10 +498,12 @@ async function startOnlineGame() {
                 // Only player 1 (host) updates the game state in Firebase
                 if (playerNumber === 1) {
                     await syncGameState();
+                    // Only the host starts the game locally, others will receive via gameState
+                    startRound(1);
+                } else {
+                    // Player 2 waits for game state update from Firebase
+                    console.log('Player 2 waiting for game state from host...');
                 }
-                
-                // Start the game locally
-                startRound(1);
                 
                 document.getElementById('lobby-status').textContent = 'Game starting...';
             } else {
@@ -539,9 +539,12 @@ function receiveGameState(newGameState) {
     player1Name = gameState.player1Name;
     player2Name = gameState.player2Name;
     
-    // Start the game if it hasn't started yet
-    if (gameState.gameStarted) {
+    // Start the game if it hasn't started yet and we're not already in a game
+    if (gameState.gameStarted && document.getElementById('game-screen').classList.contains('active') === false) {
         startRound(currentRound);
+    } else if (gameState.gameStarted) {
+        // Just update the display without restarting the round
+        updateGameDisplay();
     }
 }
 
@@ -560,12 +563,20 @@ function updateGameDisplay() {
     const isMyTurn = (playerNumber === currentPlayer);
     
     if (isMyTurn) {
-        document.getElementById('category-selection').style.display = 'block';
-        document.getElementById('question-display').classList.add('hidden');
-        displayCategories(roundConfig.categories);
+        // Only show categories if we're not already displaying a question
+        const questionDisplay = document.getElementById('question-display');
+        if (questionDisplay.classList.contains('hidden')) {
+            document.getElementById('category-selection').style.display = 'block';
+            displayCategories(roundConfig.categories);
+        }
     } else {
+        // Hide category selection if it's not my turn
         document.getElementById('category-selection').style.display = 'none';
-        document.getElementById('question-display').classList.add('hidden');
+        // Keep question display if it's showing, hide if not
+        const questionDisplay = document.getElementById('question-display');
+        if (questionDisplay.classList.contains('hidden')) {
+            // Show waiting message or appropriate state for non-active player
+        }
     }
 }
 
@@ -592,16 +603,18 @@ function nextTurn() {
             });
         }
         
-        // Update game state
+        // Update game state - increment turns first, then switch player if needed
         roundTurns++;
         gameState.roundTurns = roundTurns;
+        
+        if (roundTurns < 2) {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            gameState.currentPlayer = currentPlayer;
+        }
         
         if (roundTurns >= 2) {
             completeRound();
         } else {
-            currentPlayer = currentPlayer === 1 ? 2 : 1;
-            gameState.currentPlayer = currentPlayer;
-            
             syncGameState();
             updateGameDisplay();
         }

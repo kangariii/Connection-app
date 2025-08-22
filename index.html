@@ -13,14 +13,23 @@
         <div class="container">
             <h1 class="title">Who Are You?</h1>
             <p class="subtitle">Deepen your connection through meaningful questions</p>
-            <button onclick="showRelationshipSelection()" class="main-btn">Start Connecting</button>
+            <div class="mode-buttons">
+                <button onclick="showCreateGame()" class="mode-btn">
+                    <h3>Create Game</h3>
+                    <p>Choose relationship type and get a game code</p>
+                </button>
+                <button onclick="showJoinGame()" class="mode-btn">
+                    <h3>Join Game</h3>
+                    <p>Enter a game code to join</p>
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Relationship Selection Screen -->
     <div id="relationship-screen" class="screen">
         <div class="container">
-            <h2 class="screen-title">What's your relationship?</h2>
+            <h2 class="screen-title">Create Game - Choose Relationship</h2>
             <p class="screen-subtitle">This helps us choose the perfect questions for you</p>
             
             <div class="relationship-categories">
@@ -83,42 +92,16 @@
         </div>
     </div>
 
-    <!-- Multiplayer Mode Selection Screen -->
-    <div id="mode-screen" class="screen">
-        <div class="container">
-            <h2 class="screen-title">Choose Play Mode</h2>
-            <p class="screen-subtitle">How would you like to play?</p>
-            <div class="mode-buttons">
-                <button onclick="selectLocalMode()" class="mode-btn">
-                    <h3>Same Device</h3>
-                    <p>Pass the phone back and forth</p>
-                </button>
-                <button onclick="selectOnlineMode()" class="mode-btn">
-                    <h3>Two Phones</h3>
-                    <p>Play on separate devices</p>
-                </button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Online Room Setup Screen -->
-    <div id="room-screen" class="screen">
+    <!-- Join Game Screen -->
+    <div id="join-screen" class="screen">
         <div class="container">
-            <h2 class="screen-title">Online Play</h2>
-            <div class="room-options">
-                <button onclick="createGameRoom()" class="room-btn">
-                    <h3>Create Room</h3>
-                    <p>Start a new game and share the code</p>
-                </button>
-                <button onclick="showJoinRoom()" class="room-btn">
-                    <h3>Join Room</h3>
-                    <p>Enter a room code to join</p>
-                </button>
-            </div>
+            <h2 class="screen-title">Join Game</h2>
+            <p class="screen-subtitle">Enter the game code shared by the host</p>
             
-            <div id="join-room-input" class="join-room-input hidden">
-                <input type="text" id="room-code-input" placeholder="Enter room code" maxlength="6">
-                <button onclick="joinGameRoom()" class="main-btn">Join Room</button>
+            <div class="join-room-input">
+                <input type="text" id="room-code-input" placeholder="Enter game code" maxlength="6">
+                <button onclick="joinGameRoom()" class="main-btn">Join Game</button>
             </div>
         </div>
     </div>
@@ -126,7 +109,7 @@
     <!-- Room Lobby Screen -->
     <div id="lobby-screen" class="screen">
         <div class="container">
-            <h2 class="screen-title">Room Lobby</h2>
+            <h2 class="screen-title">Game Lobby</h2>
             <div id="room-info">
                 <p>Room Code: <span id="room-code-display" class="room-code"></span></p>
                 <p id="lobby-status">Waiting for other player...</p>
