@@ -50,12 +50,19 @@ const roundConfigs = {
 
 // Initialize the game
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Who Are You? App Initialized');
+    console.log('Who Are You? App Initialized - DOM Content Loaded');
     
     // Initialize Firebase
-    await initializeFirebase();
+    try {
+        await initializeFirebase();
+        console.log('Firebase initialization completed');
+    } catch (error) {
+        console.error('Error during Firebase initialization:', error);
+    }
     
+    console.log('About to show welcome screen');
     showScreen('welcome-screen');
+    console.log('Welcome screen should now be visible');
 });
 
 // Screen Management Functions
@@ -78,10 +85,12 @@ function showScreen(screenId) {
 }
 
 function showCreateGame() {
+    console.log('showCreateGame() called');
     showScreen('relationship-screen');
 }
 
 function showJoinGame() {
+    console.log('showJoinGame() called');
     showScreen('join-screen');
 }
 
@@ -128,34 +137,176 @@ function startRound(roundNumber) {
     roundTurns = 0;
     currentPlayer = 1;
     
-    console.log(`Starting Round ${roundNumber}`);
+    console.log(`Starting Round ${roundNumber} with presentation flow`);
     
-    // Update round display
     const roundConfig = roundConfigs[roundNumber];
-    document.getElementById('round-title').textContent = roundConfig.title;
-    document.getElementById('round-subtitle').textContent = roundConfig.subtitle;
     
-    // Update turn info
-    updateTurnDisplay();
-    
-    // Show available categories for this round
-    displayCategories(roundConfig.categories);
-    
-    // Show game screen
+    // Show game screen first (hidden state)
     showScreen('game-screen');
     
-    // Reset all display states
+    // Reset all display states to hidden
+    document.getElementById('round-header').classList.remove('show');
+    document.getElementById('turn-info').classList.remove('show');
+    document.getElementById('category-selection').classList.remove('show');
+    document.getElementById('category-selection').classList.add('hidden');
     document.getElementById('question-display').classList.add('hidden');
     document.getElementById('round-complete').classList.add('hidden');
     document.getElementById('waiting-state').classList.add('hidden');
     
-    // Show appropriate UI based on whose turn it is (for online mode)
-    if (isOnlineMode) {
-        updateGameDisplay();
-    } else {
-        // In offline mode, always show categories since players share the screen
-        document.getElementById('category-selection').style.display = 'block';
+    // Start the presentation sequence
+    presentRoundFlow(roundNumber, roundConfig);
+}
+
+function presentRoundFlow(roundNumber, roundConfig) {
+    // Create sequence of messages for this round
+    const currentPlayerName = currentPlayer === 1 ? player1Name : player2Name;
+    const messages = [
+        {
+            text: `Round ${roundNumber}`,
+            type: 'title',
+            duration: 2000
+        },
+        {
+            text: roundConfig.subtitle,
+            type: 'subtitle', 
+            duration: 2500
+        },
+        {
+            text: `${currentPlayerName}'s turn`,
+            type: 'message',
+            duration: 2000
+        }
+    ];
+    
+    // Show sequential messages, then proceed with game setup
+    showSequentialMessages(messages, () => {
+        // Update game screen content while hidden
+        document.getElementById('round-title').textContent = roundConfig.title;
+        document.getElementById('round-subtitle').textContent = roundConfig.subtitle;
+        updateTurnDisplay();
+        displayCategories(roundConfig.categories);
+        
+        // Show game elements with staggered animation
+        setTimeout(() => {
+            document.getElementById('round-header').classList.add('show');
+        }, 200);
+        
+        setTimeout(() => {
+            document.getElementById('turn-info').classList.add('show');
+        }, 600);
+        
+        setTimeout(() => {
+            if (isOnlineMode) {
+                updateGameDisplay();
+            } else {
+                showCategorySelection();
+            }
+        }, 1000);
+    });
+}
+
+// Sequential Message System
+function showSequentialMessages(messages, finalCallback) {
+    if (!messages || messages.length === 0) {
+        if (finalCallback) finalCallback();
+        return;
     }
+    
+    let currentIndex = 0;
+    
+    function showNextMessage() {
+        if (currentIndex >= messages.length) {
+            if (finalCallback) finalCallback();
+            return;
+        }
+        
+        const message = messages[currentIndex];
+        showMessage(message.text, message.type, message.duration, () => {
+            currentIndex++;
+            // Small delay between messages for better flow
+            setTimeout(showNextMessage, 300);
+        });
+    }
+    
+    showNextMessage();
+}
+
+function showMessage(text, type = 'title', duration = 2000, callback) {
+    const announcement = document.getElementById('round-announcement');
+    const title = document.getElementById('announcement-title');
+    const subtitle = document.getElementById('announcement-subtitle');
+    
+    // Reset both elements
+    title.style.display = 'none';
+    subtitle.style.display = 'none';
+    title.textContent = '';
+    subtitle.textContent = '';
+    
+    // Set content based on type
+    if (type === 'title') {
+        title.textContent = text;
+        title.style.display = 'block';
+        title.style.fontSize = '4rem';
+    } else if (type === 'subtitle') {
+        subtitle.textContent = text;
+        subtitle.style.display = 'block';
+        subtitle.style.fontSize = '2rem';
+    } else if (type === 'message') {
+        subtitle.textContent = text;
+        subtitle.style.display = 'block';
+        subtitle.style.fontSize = '2.5rem';
+    }
+    
+    // Show announcement
+    announcement.classList.add('show');
+    
+    // Auto-hide after duration and trigger callback
+    setTimeout(() => {
+        announcement.classList.remove('show');
+        announcement.classList.add('hide');
+        
+        // Remove hide class after animation completes
+        setTimeout(() => {
+            announcement.classList.remove('hide');
+            if (callback) callback();
+        }, 600);
+    }, duration);
+}
+
+function showRoundAnnouncement(roundNumber, roundConfig, callback) {
+    const announcement = document.getElementById('round-announcement');
+    const title = document.getElementById('announcement-title');
+    const subtitle = document.getElementById('announcement-subtitle');
+    
+    // Set content
+    title.textContent = `Round ${roundNumber}`;
+    subtitle.textContent = roundConfig.subtitle;
+    
+    // Show announcement
+    announcement.classList.add('show');
+    
+    // Auto-hide after 2.5 seconds and trigger callback
+    setTimeout(() => {
+        announcement.classList.remove('show');
+        announcement.classList.add('hide');
+        
+        // Remove hide class after animation completes
+        setTimeout(() => {
+            announcement.classList.remove('hide');
+            if (callback) callback();
+        }, 600);
+    }, 2500);
+}
+
+function showCategorySelection() {
+    const categorySelection = document.getElementById('category-selection');
+    categorySelection.classList.remove('hidden');
+    categorySelection.style.display = 'block';
+    
+    // Trigger animation
+    setTimeout(() => {
+        categorySelection.classList.add('show');
+    }, 100);
 }
 
 function updateTurnDisplay() {
@@ -193,27 +344,45 @@ function selectCategory(category) {
     const question = getRandomQuestion(category, currentRelationshipType, currentRound);
     
     if (question) {
-        displayQuestion(category, question);
-        // Each player chooses their own question independently - no sharing needed
+        // Hide category selection with animation, then show question
+        hideCategorySelection(() => {
+            displayQuestionWithAnimation(category, question);
+        });
     } else {
         console.error('No question found for category:', category);
         alert('Sorry, no questions available for this category. Please try another.');
     }
 }
 
-function displayQuestion(category, question) {
-    // Hide category selection
-    document.getElementById('category-selection').style.display = 'none';
+function hideCategorySelection(callback) {
+    const categorySelection = document.getElementById('category-selection');
+    categorySelection.classList.remove('show');
+    categorySelection.classList.add('hide');
     
-    // Show question display
-    document.getElementById('question-display').classList.remove('hidden');
-    
+    setTimeout(() => {
+        categorySelection.classList.add('hidden');
+        categorySelection.style.display = 'none';
+        categorySelection.classList.remove('hide');
+        if (callback) callback();
+    }, 600);
+}
+
+function displayQuestionWithAnimation(category, question) {
     // Set question content
     document.getElementById('question-category').textContent = category;
     document.getElementById('question-text').textContent = question;
     
-    console.log(`Displaying question: ${question}`);
+    // Show question display with animation
+    const questionDisplay = document.getElementById('question-display');
+    questionDisplay.classList.remove('hidden');
+    
+    setTimeout(() => {
+        questionDisplay.classList.add('show');
+    }, 100);
+    
+    console.log(`Displaying question with animation: ${question}`);
 }
+
 
 
 function completeRound() {
@@ -224,8 +393,19 @@ function completeRound() {
     // Hide question display
     document.getElementById('question-display').classList.add('hidden');
     
-    // Show round complete message
-    document.getElementById('round-complete').classList.remove('hidden');
+    // Show round completion message sequence
+    const messages = [
+        {
+            text: `Round ${currentRound} Complete!`,
+            type: 'title',
+            duration: 2000
+        }
+    ];
+    
+    showSequentialMessages(messages, () => {
+        // Show round complete UI
+        document.getElementById('round-complete').classList.remove('hidden');
+    });
 }
 
 function nextRound() {
@@ -586,16 +766,20 @@ function updateGameDisplay() {
     if (roundConfig) {
         document.getElementById('round-title').textContent = roundConfig.title;
         document.getElementById('round-subtitle').textContent = roundConfig.subtitle;
+        document.getElementById('round-header').classList.add('show');
     }
     
     // Update turn display
     updateTurnDisplay();
+    document.getElementById('turn-info').classList.add('show');
     
     // Check if round is complete first
     if (roundTurns >= 2) {
         console.log('updateGameDisplay: Round complete, showing round complete UI');
-        document.getElementById('category-selection').style.display = 'none';
+        document.getElementById('category-selection').classList.remove('show');
+        document.getElementById('category-selection').classList.add('hidden');
         document.getElementById('waiting-state').classList.add('hidden');
+        document.getElementById('question-display').classList.remove('show');
         document.getElementById('question-display').classList.add('hidden');
         document.getElementById('round-complete').classList.remove('hidden');
         return;
@@ -613,17 +797,18 @@ function updateGameDisplay() {
         
         if (questionHidden) {
             console.log('updateGameDisplay: Showing category selection for my turn');
-            document.getElementById('category-selection').style.display = 'block';
             document.getElementById('waiting-state').classList.add('hidden');
             document.getElementById('round-complete').classList.add('hidden');
             displayCategories(roundConfig.categories);
+            showCategorySelection();
         } else {
             console.log('updateGameDisplay: Question already displayed, not showing categories');
         }
     } else {
         // Show waiting state when it's not my turn
         console.log('updateGameDisplay: Showing waiting state - not my turn');
-        document.getElementById('category-selection').style.display = 'none';
+        document.getElementById('category-selection').classList.remove('show');
+        document.getElementById('category-selection').classList.add('hidden');
         document.getElementById('waiting-state').classList.remove('hidden');
         
         // Update waiting message based on current player
@@ -674,27 +859,63 @@ function nextTurn() {
             gameState.currentPlayer = currentPlayer;
             gameState.roundTurns = roundTurns;
             
-            // Hide previous player's question display
-            document.getElementById('question-display').classList.add('hidden');
+            // Hide previous player's question display with animation
+            const questionDisplay = document.getElementById('question-display');
+            questionDisplay.classList.remove('show');
             
-            syncGameState().then(() => {
-                updateGameDisplay();
-            }).finally(() => {
-                isUpdatingState = false;
-            });
+            setTimeout(() => {
+                questionDisplay.classList.add('hidden');
+                
+                // Show turn transition message for online mode too
+                const newPlayerName = currentPlayer === 1 ? player1Name : player2Name;
+                const isMyTurn = (playerNumber === currentPlayer);
+                const messages = [
+                    {
+                        text: isMyTurn ? `Your turn` : `${newPlayerName}'s turn`,
+                        type: 'message',
+                        duration: 1500
+                    }
+                ];
+                
+                showSequentialMessages(messages, () => {
+                    syncGameState().then(() => {
+                        updateGameDisplay();
+                    }).finally(() => {
+                        isUpdatingState = false;
+                    });
+                });
+            }, 400);
         } else {
-            // Update turn display for offline mode
-            updateTurnDisplay();
+            // Offline mode - show turn transition message, then show categories
+            const questionDisplay = document.getElementById('question-display');
+            questionDisplay.classList.remove('show');
             
-            // Show category selection again
-            document.getElementById('category-selection').style.display = 'block';
-            document.getElementById('question-display').classList.add('hidden');
-            
-            // Display categories for this round again
-            const roundConfig = roundConfigs[currentRound];
-            displayCategories(roundConfig.categories);
-            
-            isUpdatingState = false;
+            setTimeout(() => {
+                questionDisplay.classList.add('hidden');
+                
+                // Show turn transition message
+                const newPlayerName = currentPlayer === 1 ? player1Name : player2Name;
+                const messages = [
+                    {
+                        text: `${newPlayerName}'s turn`,
+                        type: 'message',
+                        duration: 1500
+                    }
+                ];
+                
+                showSequentialMessages(messages, () => {
+                    // Update turn display
+                    updateTurnDisplay();
+                    document.getElementById('turn-info').classList.add('show');
+                    
+                    // Display categories for this round again and show with animation
+                    const roundConfig = roundConfigs[currentRound];
+                    displayCategories(roundConfig.categories);
+                    showCategorySelection();
+                    
+                    isUpdatingState = false;
+                });
+            }, 400);
         }
     }
 }

@@ -18,6 +18,13 @@ let isFirebaseConnected = false;
 
 async function initializeFirebase() {
     try {
+        // Check if Firebase is available
+        if (typeof firebase === 'undefined') {
+            console.log('Firebase not available, running in offline mode');
+            isFirebaseConnected = false;
+            return false;
+        }
+        
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         database = firebase.database();

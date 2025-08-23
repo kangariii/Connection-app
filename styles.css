@@ -615,9 +615,198 @@ body {
     border: 2px solid rgba(255, 255, 255, 0.5);
 }
 
+/* Presentation Flow Animations */
+.round-announcement {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.round-announcement.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.round-announcement.hide {
+    opacity: 0;
+    transform: scale(1.2);
+    pointer-events: none;
+}
+
+.round-announcement-content {
+    text-align: center;
+    color: white;
+    transform: translateY(20px);
+    opacity: 0;
+    animation: slideUpFadeIn 0.8s ease-out 0.2s forwards;
+}
+
+.round-announcement-title {
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    background: linear-gradient(45deg, #fff, #f0f0f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.round-announcement-subtitle {
+    font-size: 1.5rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+@keyframes slideUpFadeIn {
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Sequential Message System Improvements */
+.round-announcement-title, .round-announcement-subtitle {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Category Selection Presentation */
+.category-selection {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.category-selection.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.category-selection.hide {
+    opacity: 0;
+    transform: translateY(-30px);
+    pointer-events: none;
+}
+
+.category-selection h3 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUpFadeIn 0.6s ease-out 0.3s forwards;
+}
+
+.categories-container {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUpFadeIn 0.8s ease-out 0.5s forwards;
+}
+
+.category-btn {
+    transform: scale(0.9);
+    opacity: 0;
+    animation: popIn 0.6s ease-out forwards;
+}
+
+.category-btn:nth-child(1) { animation-delay: 0.7s; }
+.category-btn:nth-child(2) { animation-delay: 0.8s; }
+.category-btn:nth-child(3) { animation-delay: 0.9s; }
+
+@keyframes popIn {
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Question Display Presentation */
+.question-display {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.question-display.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.question-display .card {
+    transform: scale(0.95);
+    opacity: 0;
+    animation: cardSlideIn 0.8s ease-out 0.2s forwards;
+}
+
+@keyframes cardSlideIn {
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+#question-category {
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: slideInLeft 0.6s ease-out 0.4s forwards;
+}
+
+#question-text {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUpFadeIn 0.8s ease-out 0.6s forwards;
+}
+
+@keyframes slideInLeft {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Round Header Presentation */
+.round-header {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease-out;
+}
+
+.round-header.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.turn-info {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease-out 0.2s;
+}
+
+.turn-info.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 /* Utility Classes */
 .hidden {
     display: none !important;
+}
+
+.fade-out {
+    opacity: 0 !important;
+    transform: scale(0.95) !important;
+    pointer-events: none;
 }
 
 /* Mobile Responsiveness */
@@ -633,6 +822,15 @@ body {
     
     .screen-title {
         font-size: 2rem;
+    }
+    
+    /* Sequential message mobile improvements */
+    .round-announcement-title {
+        font-size: 3rem !important;
+    }
+    
+    .round-announcement-subtitle {
+        font-size: 1.5rem !important;
     }
     
     .relationship-grid {
@@ -681,6 +879,15 @@ body {
     
     .container {
         padding: 15px;
+    }
+    
+    /* Sequential message mobile improvements for small screens */
+    .round-announcement-title {
+        font-size: 2.5rem !important;
+    }
+    
+    .round-announcement-subtitle {
+        font-size: 1.3rem !important;
     }
     
     .mode-btn {
