@@ -48,23 +48,6 @@ const roundConfigs = {
     }
 };
 
-// Initialize the game
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Who Are You? App Initialized - DOM Content Loaded');
-    
-    // Initialize Firebase
-    try {
-        await initializeFirebase();
-        console.log('Firebase initialization completed');
-    } catch (error) {
-        console.error('Error during Firebase initialization:', error);
-    }
-    
-    console.log('About to show welcome screen');
-    showScreen('welcome-screen');
-    console.log('Welcome screen should now be visible');
-});
-
 // Screen Management Functions
 function showScreen(screenId) {
     console.log(`showScreen() called with screenId: ${screenId}`);
@@ -84,14 +67,137 @@ function showScreen(screenId) {
     }
 }
 
+// Initialize the game
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('Who Are You? App Initialized - DOM Content Loaded');
+    
+    // Initialize Firebase
+    try {
+        await initializeFirebase();
+        console.log('Firebase initialization completed');
+    } catch (error) {
+        console.error('Error during Firebase initialization:', error);
+    }
+    
+    // Add click event listeners as backup
+    const createBtn = document.querySelector('button[onclick="showCreateGame()"]');
+    const joinBtn = document.querySelector('button[onclick="showJoinGame()"]');
+    
+    if (createBtn) {
+        createBtn.addEventListener('click', function() {
+            console.log('Create Game button clicked via event listener');
+            showCreateGame();
+        });
+        console.log('Create Game button found and event listener added');
+        console.log('Create button styles:', window.getComputedStyle(createBtn).pointerEvents);
+    } else {
+        console.error('Create Game button not found!');
+    }
+    
+    if (joinBtn) {
+        joinBtn.addEventListener('click', function() {
+            console.log('Join Game button clicked via event listener');
+            showJoinGame();
+        });
+        console.log('Join Game button found and event listener added');
+        console.log('Join button styles:', window.getComputedStyle(joinBtn).pointerEvents);
+    } else {
+        console.error('Join Game button not found!');
+    }
+    
+    console.log('About to show welcome screen');
+    showScreen('welcome-screen');
+    console.log('Welcome screen should now be visible');
+});
+
+let currentCategoryIndex = 0;
+const categories = ['family', 'romantic', 'friends', 'other'];
+
 function showCreateGame() {
     console.log('showCreateGame() called');
-    showScreen('relationship-screen');
+    console.trace('showCreateGame call stack');
+    
+    try {
+        currentCategoryIndex = 0;
+        
+        // Hide the current screen immediately to prevent flashing
+        const currentScreen = document.querySelector('.screen.active');
+        if (currentScreen) {
+            currentScreen.classList.remove('active');
+            console.log('Removed active class from current screen');
+        }
+        
+        const messages = [
+            { text: "Choose Your Relationship", type: "title", duration: 1500 },
+            { text: "We'll tailor questions just for you", type: "subtitle", duration: 2000 }
+        ];
+        
+        console.log('About to show sequential messages');
+        showSequentialMessages(messages, () => {
+            console.log('Sequential messages complete, showing relationship screen');
+            showScreen('relationship-screen');
+            showCurrentCategory();
+        });
+    } catch (error) {
+        console.error('Error in showCreateGame:', error);
+    }
+}
+
+function showCurrentCategory() {
+    const allSections = document.querySelectorAll('.category-section');
+    allSections.forEach(section => {
+        section.style.display = 'none';
+        section.classList.remove('show');
+    });
+    
+    const currentSection = document.querySelector(`[data-category="${categories[currentCategoryIndex]}"]`);
+    if (currentSection) {
+        currentSection.style.display = 'block';
+        setTimeout(() => {
+            currentSection.classList.add('show');
+        }, 100);
+    }
+}
+
+function showNextCategory() {
+    if (currentCategoryIndex < categories.length - 1) {
+        currentCategoryIndex++;
+        showCurrentCategory();
+    }
+}
+
+function showPrevCategory() {
+    if (currentCategoryIndex > 0) {
+        currentCategoryIndex--;
+        showCurrentCategory();
+    }
 }
 
 function showJoinGame() {
     console.log('showJoinGame() called');
-    showScreen('join-screen');
+    console.trace('showJoinGame call stack');
+    
+    try {
+        // Hide the current screen immediately to prevent flashing
+        const currentScreen = document.querySelector('.screen.active');
+        if (currentScreen) {
+            currentScreen.classList.remove('active');
+            console.log('Removed active class from current screen');
+        }
+        
+        const messages = [
+            { text: "Join a Game", type: "title", duration: 1500 },
+            { text: "Enter your partner's game code", type: "subtitle", duration: 2000 }
+        ];
+        
+        console.log('About to show sequential messages');
+        showSequentialMessages(messages, () => {
+            console.log('Sequential messages complete, showing join screen');
+            showScreen('join-screen');
+        });
+    } catch (error) {
+        console.error('Error in showJoinGame:', error);
+    }
 }
 
 function selectRelationship(relationshipType, buttonElement) {
@@ -140,18 +246,32 @@ function startRound(roundNumber) {
     console.log(`Starting Round ${roundNumber} with presentation flow`);
     
     const roundConfig = roundConfigs[roundNumber];
+    if (!roundConfig) {
+        console.error(`No round config found for round ${roundNumber}`);
+        alert(`Error: Round ${roundNumber} configuration not found.`);
+        return;
+    }
     
     // Show game screen first (hidden state)
     showScreen('game-screen');
     
     // Reset all display states to hidden
-    document.getElementById('round-header').classList.remove('show');
-    document.getElementById('turn-info').classList.remove('show');
-    document.getElementById('category-selection').classList.remove('show');
-    document.getElementById('category-selection').classList.add('hidden');
-    document.getElementById('question-display').classList.add('hidden');
-    document.getElementById('round-complete').classList.add('hidden');
-    document.getElementById('waiting-state').classList.add('hidden');
+    const elements = [
+        'round-header', 'turn-info', 'category-selection', 
+        'question-display', 'round-complete', 'waiting-state'
+    ];
+    
+    elements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.classList.remove('show');
+            if (elementId !== 'round-header' && elementId !== 'turn-info') {
+                element.classList.add('hidden');
+            }
+        } else {
+            console.error(`Element with id '${elementId}' not found`);
+        }
+    });
     
     // Start the presentation sequence
     presentRoundFlow(roundNumber, roundConfig);
@@ -160,6 +280,10 @@ function startRound(roundNumber) {
 function presentRoundFlow(roundNumber, roundConfig) {
     // Create sequence of messages for this round
     const currentPlayerName = currentPlayer === 1 ? player1Name : player2Name;
+    const playerTurnText = currentPlayerName ? `${currentPlayerName}'s turn` : `Player ${currentPlayer}'s turn`;
+    
+    console.log(`presentRoundFlow: currentPlayer=${currentPlayer}, player1Name='${player1Name}', player2Name='${player2Name}', currentPlayerName='${currentPlayerName}'`);
+    
     const messages = [
         {
             text: `Round ${roundNumber}`,
@@ -172,7 +296,7 @@ function presentRoundFlow(roundNumber, roundConfig) {
             duration: 2500
         },
         {
-            text: `${currentPlayerName}'s turn`,
+            text: playerTurnText,
             type: 'message',
             duration: 2000
         }
@@ -181,19 +305,13 @@ function presentRoundFlow(roundNumber, roundConfig) {
     // Show sequential messages, then proceed with game setup
     showSequentialMessages(messages, () => {
         // Update game screen content while hidden
-        document.getElementById('round-title').textContent = roundConfig.title;
-        document.getElementById('round-subtitle').textContent = roundConfig.subtitle;
         updateTurnDisplay();
         displayCategories(roundConfig.categories);
         
-        // Show game elements with staggered animation
-        setTimeout(() => {
-            document.getElementById('round-header').classList.add('show');
-        }, 200);
-        
+        // Show game elements with staggered animation - skip round header
         setTimeout(() => {
             document.getElementById('turn-info').classList.add('show');
-        }, 600);
+        }, 200);
         
         setTimeout(() => {
             if (isOnlineMode) {
@@ -201,7 +319,7 @@ function presentRoundFlow(roundNumber, roundConfig) {
             } else {
                 showCategorySelection();
             }
-        }, 1000);
+        }, 600);
     });
 }
 
@@ -235,6 +353,26 @@ function showMessage(text, type = 'title', duration = 2000, callback) {
     const announcement = document.getElementById('round-announcement');
     const title = document.getElementById('announcement-title');
     const subtitle = document.getElementById('announcement-subtitle');
+    const content = announcement?.querySelector('.round-announcement-content');
+    
+    if (!announcement || !title || !subtitle) {
+        console.error('Missing announcement elements:', { announcement: !!announcement, title: !!title, subtitle: !!subtitle });
+        if (callback) callback();
+        return;
+    }
+    
+    // Complete reset of announcement state
+    announcement.classList.remove('show', 'hide');
+    announcement.style.opacity = '0';
+    announcement.style.transform = 'scale(0.8)';
+    
+    // Reset content animation
+    if (content) {
+        content.style.animation = 'none';
+        content.style.opacity = '0';
+        content.style.transform = 'translateY(20px)';
+        content.offsetHeight; // Force reflow
+    }
     
     // Reset both elements
     title.style.display = 'none';
@@ -257,8 +395,20 @@ function showMessage(text, type = 'title', duration = 2000, callback) {
         subtitle.style.fontSize = '2.5rem';
     }
     
-    // Show announcement
-    announcement.classList.add('show');
+    // Small delay to ensure reset is complete, then start animation
+    setTimeout(() => {
+        // Re-enable content animation
+        if (content) {
+            content.style.animation = 'slideUpFadeIn 0.8s ease-out 0.2s forwards';
+        }
+        
+        // Clear inline styles to let CSS take over
+        announcement.style.opacity = '';
+        announcement.style.transform = '';
+        
+        // Show announcement
+        announcement.classList.add('show');
+    }, 50);
     
     // Auto-hide after duration and trigger callback
     setTimeout(() => {
@@ -270,7 +420,7 @@ function showMessage(text, type = 'title', duration = 2000, callback) {
             announcement.classList.remove('hide');
             if (callback) callback();
         }, 600);
-    }, duration);
+    }, duration + 50);
 }
 
 function showRoundAnnouncement(roundNumber, roundConfig, callback) {
@@ -438,7 +588,29 @@ function nextRound() {
 
 function completeGame() {
     console.log('Game completed!');
-    showScreen('complete-screen');
+    
+    // Hide the current screen immediately to prevent flashing
+    const currentScreen = document.querySelector('.screen.active');
+    if (currentScreen) {
+        currentScreen.classList.remove('active');
+    }
+    
+    const messages = [
+        { text: "Journey Complete!", type: "title", duration: 2000 },
+        { text: "Thank you for connecting", type: "subtitle", duration: 2500 },
+        { text: "You've shared meaningful moments", type: "subtitle", duration: 2500 },
+        { text: "And learned something new", type: "subtitle", duration: 2500 },
+        { text: "The strongest connections are built", type: "subtitle", duration: 2500 },
+        { text: "One conversation at a time", type: "subtitle", duration: 3000 }
+    ];
+    
+    showSequentialMessages(messages, () => {
+        showScreen('complete-screen');
+        setTimeout(() => {
+            document.getElementById('complete-content').style.display = 'block';
+            document.getElementById('complete-content').classList.add('show');
+        }, 1000);
+    });
 }
 
 function restartGame() {
@@ -480,11 +652,34 @@ function restartGame() {
     isPlayerReady = false;
     isUpdatingState = false;
     
+    // Reset category navigation
+    currentCategoryIndex = 0;
+    
     // Clear input fields
     document.getElementById('player1-name').value = '';
     document.getElementById('player2-name').value = '';
     document.getElementById('your-name').value = '';
     document.getElementById('room-code-input').value = '';
+    
+    // Reset category sections
+    const allSections = document.querySelectorAll('.category-section');
+    allSections.forEach(section => {
+        section.style.display = 'none';
+        section.classList.remove('show');
+    });
+    
+    // Reset lobby and complete content
+    const lobbyInfo = document.getElementById('lobby-info');
+    if (lobbyInfo) {
+        lobbyInfo.style.display = 'none';
+        lobbyInfo.classList.remove('show');
+    }
+    
+    const completeContent = document.getElementById('complete-content');
+    if (completeContent) {
+        completeContent.style.display = 'none';
+        completeContent.classList.remove('show');
+    }
     
     // Hide join room input
     document.getElementById('join-room-input').classList.add('hidden');
@@ -503,7 +698,17 @@ function restartGame() {
 // Multiplayer Functions
 
 function generateRoomCode() {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+    const words = [
+        'APPLE', 'BRAVE', 'CLOUD', 'DREAM', 'EAGLE', 'FLAME', 'GRACE',
+        'HEART', 'IVORY', 'JEWEL', 'KNIGHT', 'LIGHT', 'MAGIC', 'NORTH',
+        'OCEAN', 'PEACE', 'QUEST', 'RIVER', 'STORM', 'TOWER', 'UNITY',
+        'VOICE', 'WAVES', 'YOUTH', 'ZONES', 'BEACH', 'CHAIR', 'DANCE',
+        'EARTH', 'FOCUS', 'GIANT', 'HOUSE', 'IMAGE', 'JOLLY', 'KNEEL',
+        'LAUGH', 'MOUSE', 'NOVEL', 'ORBIT', 'PIANO', 'QUICK', 'RAPID',
+        'SMILE', 'TASTE', 'ULTRA', 'VALUE', 'WORLD', 'EXTRA', 'YIELD'
+    ];
+    
+    return words[Math.floor(Math.random() * words.length)];
 }
 
 async function createGameRoom() {
@@ -512,24 +717,40 @@ async function createGameRoom() {
     playerId = 'player-' + Math.random().toString(36).substring(2, 9);
     playerNumber = 1;
     
-    document.getElementById('room-code-display').textContent = roomCode;
-    document.getElementById('lobby-status').textContent = 'Creating room...';
-    showScreen('lobby-screen');
-    
-    try {
-        await createRoom(roomCode, playerId, currentRelationshipType);
-        setupRoomListeners();
-        document.getElementById('lobby-status').textContent = 'Room created! Share the code with your partner.';
-    } catch (error) {
-        console.error('Failed to create room:', error);
-        document.getElementById('lobby-status').textContent = 'Failed to create room. Please try again.';
+    // Hide the current screen immediately to prevent flashing
+    const currentScreen = document.querySelector('.screen.active');
+    if (currentScreen) {
+        currentScreen.classList.remove('active');
     }
+    
+    const messages = [
+        { text: "Creating Your Game", type: "title", duration: 1500 },
+        { text: `Room Code: ${roomCode}`, type: "subtitle", duration: 2000 },
+        { text: "Share this code with your partner", type: "subtitle", duration: 2500 }
+    ];
+    
+    showSequentialMessages(messages, () => {
+        document.getElementById('room-code-display').textContent = roomCode;
+        document.getElementById('lobby-status').textContent = 'Waiting...';
+        showScreen('lobby-screen');
+        showLobbyContent();
+        
+        createRoom(roomCode, playerId, currentRelationshipType)
+            .then(() => {
+                setupRoomListeners();
+                document.getElementById('lobby-status').textContent = 'Waiting...';
+            })
+            .catch(error => {
+                console.error('Failed to create room:', error);
+                document.getElementById('lobby-status').textContent = 'Connection failed';
+            });
+    });
 }
 
 async function joinGameRoom() {
     const inputCode = document.getElementById('room-code-input').value.trim().toUpperCase();
-    if (!inputCode || inputCode.length !== 6) {
-        alert('Please enter a valid 6-character game code');
+    if (!inputCode || !inputCode.match(/^[A-Z]{4,7}$/)) {
+        alert('Please enter a valid game code (4-7 letter word)');
         return;
     }
     
@@ -538,18 +759,44 @@ async function joinGameRoom() {
     playerId = 'player-' + Math.random().toString(36).substring(2, 9);
     playerNumber = 2;
     
-    document.getElementById('room-code-display').textContent = roomCode;
-    document.getElementById('lobby-status').textContent = 'Joining game...';
-    showScreen('lobby-screen');
-    
-    try {
-        await joinRoom(roomCode, playerId, 'Player 2');
-        setupRoomListeners();
-        document.getElementById('lobby-status').textContent = 'Joined game! Enter your name and click "Begin Journey" when ready.';
-    } catch (error) {
-        console.error('Failed to join game:', error);
-        document.getElementById('lobby-status').textContent = 'Failed to join game. Please check the code and try again.';
+    // Hide the current screen immediately to prevent flashing
+    const currentScreen = document.querySelector('.screen.active');
+    if (currentScreen) {
+        currentScreen.classList.remove('active');
     }
+    
+    const messages = [
+        { text: "Joining Game", type: "title", duration: 1500 },
+        { text: `Room Code: ${roomCode}`, type: "subtitle", duration: 2000 },
+        { text: "Connecting to your partner", type: "subtitle", duration: 2000 }
+    ];
+    
+    showSequentialMessages(messages, () => {
+        document.getElementById('room-code-display').textContent = roomCode;
+        document.getElementById('lobby-status').textContent = 'Waiting...';
+        showScreen('lobby-screen');
+        showLobbyContent();
+        
+        joinRoom(roomCode, playerId, 'Player 2')
+            .then(() => {
+                setupRoomListeners();
+                document.getElementById('lobby-status').textContent = 'Ready to begin?';
+            })
+            .catch(error => {
+                console.error('Failed to join game:', error);
+                document.getElementById('lobby-status').textContent = 'Connection failed';
+            });
+    });
+}
+
+function showLobbyContent() {
+    setTimeout(() => {
+        const lobbyInfo = document.getElementById('lobby-info');
+        lobbyInfo.style.display = 'block';
+        setTimeout(() => {
+            lobbyInfo.classList.add('show');
+        }, 100);
+    }, 500);
 }
 
 function setupRoomListeners() {
@@ -606,15 +853,15 @@ function handleRoomUpdate(roomData) {
                 receiveGameState(roomData.gameState);
             } else {
                 // Both ready but game not started yet - enable button and allow game start
-                document.getElementById('lobby-status').textContent = 'Both players ready! Click "Begin Journey" to start.';
+                document.getElementById('lobby-status').textContent = 'Ready to begin!';
                 document.getElementById('start-online-game').disabled = false;
             }
         } else {
-            document.getElementById('lobby-status').textContent = `Waiting for ${2 - readyPlayers.length} player(s) to be ready...`;
+            document.getElementById('lobby-status').textContent = 'Waiting...';
             document.getElementById('start-online-game').disabled = false;
         }
     } else {
-        document.getElementById('lobby-status').textContent = 'Waiting for other player to join...';
+        document.getElementById('lobby-status').textContent = 'Waiting...';
         document.getElementById('start-online-game').disabled = true;
     }
 }
@@ -692,17 +939,25 @@ async function startOnlineGame() {
                 
                 // Only player 1 (host) updates the game state in Firebase
                 if (playerNumber === 1) {
-                    await syncGameState();
-                    // Only the host starts the game locally, others will receive via gameState
-                    startRound(1);
+                    try {
+                        await syncGameState();
+                        console.log('Game state synced, starting round for host');
+                        // Only the host starts the game locally, others will receive via gameState
+                        startRound(1);
+                    } catch (error) {
+                        console.error('Failed to sync game state, starting offline:', error);
+                        // Fall back to offline mode
+                        isOnlineMode = false;
+                        startRound(1);
+                    }
                 } else {
                     // Player 2 waits for game state update from Firebase
                     console.log('Player 2 waiting for game state from host...');
                 }
                 
-                document.getElementById('lobby-status').textContent = 'Game starting...';
+                document.getElementById('lobby-status').textContent = 'Starting...';
             } else {
-                document.getElementById('lobby-status').textContent = 'Waiting for other player to be ready...';
+                document.getElementById('lobby-status').textContent = 'Waiting...';
                 // Don't disable the button - let handleRoomUpdate manage button state
             }
         }
@@ -761,13 +1016,8 @@ function receiveGameState(newGameState) {
 function updateGameDisplay() {
     console.log(`updateGameDisplay: currentRound=${currentRound}, currentPlayer=${currentPlayer}, roundTurns=${roundTurns}, playerNumber=${playerNumber}`);
     
-    // Update round display
+    // Get round config for categories
     const roundConfig = roundConfigs[currentRound];
-    if (roundConfig) {
-        document.getElementById('round-title').textContent = roundConfig.title;
-        document.getElementById('round-subtitle').textContent = roundConfig.subtitle;
-        document.getElementById('round-header').classList.add('show');
-    }
     
     // Update turn display
     updateTurnDisplay();
@@ -919,5 +1169,6 @@ function nextTurn() {
         }
     }
 }
+
 
 

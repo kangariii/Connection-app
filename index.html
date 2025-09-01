@@ -29,12 +29,9 @@
     <!-- Relationship Selection Screen -->
     <div id="relationship-screen" class="screen">
         <div class="container">
-            <h2 class="screen-title">Create Game - Choose Relationship</h2>
-            <p class="screen-subtitle">This helps us choose the perfect questions for you</p>
-            
-            <div class="relationship-categories">
+            <div id="relationship-categories" class="relationship-categories">
                 <!-- Family Relationships -->
-                <div class="category-section">
+                <div class="category-section" data-category="family" style="display: none;">
                     <h3 class="category-title">Family</h3>
                     <div class="relationship-grid">
                         <button onclick="selectRelationship('brother-brother', this)" class="relationship-btn">Brother & Brother</button>
@@ -52,10 +49,13 @@
                         <button onclick="selectRelationship('female-cousins', this)" class="relationship-btn">Female Cousins</button>
                         <button onclick="selectRelationship('mixed-cousins', this)" class="relationship-btn">Male & Female Cousins</button>
                     </div>
+                    <div class="category-nav">
+                        <button onclick="showNextCategory()" class="nav-btn">Next Category</button>
+                    </div>
                 </div>
 
                 <!-- Romantic Relationships -->
-                <div class="category-section">
+                <div class="category-section" data-category="romantic" style="display: none;">
                     <h3 class="category-title">Romantic</h3>
                     <div class="relationship-grid">
                         <button onclick="selectRelationship('new-dating', this)" class="relationship-btn">New Dating Couple</button>
@@ -63,10 +63,14 @@
                         <button onclick="selectRelationship('engaged', this)" class="relationship-btn">Engaged Couple</button>
                         <button onclick="selectRelationship('married', this)" class="relationship-btn">Married Couple</button>
                     </div>
+                    <div class="category-nav">
+                        <button onclick="showPrevCategory()" class="nav-btn">Previous</button>
+                        <button onclick="showNextCategory()" class="nav-btn">Next Category</button>
+                    </div>
                 </div>
 
                 <!-- Friends -->
-                <div class="category-section">
+                <div class="category-section" data-category="friends" style="display: none;">
                     <h3 class="category-title">Friends</h3>
                     <div class="relationship-grid">
                         <button onclick="selectRelationship('best-friends-same', this)" class="relationship-btn">Best Friends (Same Gender)</button>
@@ -76,16 +80,23 @@
                         <button onclick="selectRelationship('work-friends', this)" class="relationship-btn">Work Friends</button>
                         <button onclick="selectRelationship('online-friends', this)" class="relationship-btn">Online Friends Meeting IRL</button>
                     </div>
+                    <div class="category-nav">
+                        <button onclick="showPrevCategory()" class="nav-btn">Previous</button>
+                        <button onclick="showNextCategory()" class="nav-btn">Next Category</button>
+                    </div>
                 </div>
 
                 <!-- Other -->
-                <div class="category-section">
+                <div class="category-section" data-category="other" style="display: none;">
                     <h3 class="category-title">Other</h3>
                     <div class="relationship-grid">
                         <button onclick="selectRelationship('colleagues', this)" class="relationship-btn">Colleagues</button>
                         <button onclick="selectRelationship('mentor-mentee', this)" class="relationship-btn">Mentor & Mentee</button>
                         <button onclick="selectRelationship('roommates', this)" class="relationship-btn">Roommates</button>
                         <button onclick="selectRelationship('neighbors', this)" class="relationship-btn">Neighbors</button>
+                    </div>
+                    <div class="category-nav">
+                        <button onclick="showPrevCategory()" class="nav-btn">Previous</button>
                     </div>
                 </div>
             </div>
@@ -100,7 +111,7 @@
             <p class="screen-subtitle">Enter the game code shared by the host</p>
             
             <div class="join-room-input">
-                <input type="text" id="room-code-input" placeholder="Enter game code" maxlength="6">
+                <input type="text" id="room-code-input" placeholder="Enter game code" maxlength="7">
                 <button onclick="joinGameRoom()" class="main-btn">Join Game</button>
             </div>
         </div>
@@ -109,30 +120,25 @@
     <!-- Room Lobby Screen -->
     <div id="lobby-screen" class="screen">
         <div class="container">
-            <h2 class="screen-title">Game Lobby</h2>
-            <div id="room-info">
-                <p>Room Code: <span id="room-code-display" class="room-code"></span></p>
-                <p id="lobby-status">Waiting for other player...</p>
-            </div>
-            
-            <div class="player-inputs">
-                <div class="input-group">
-                    <label for="your-name">Your Name:</label>
-                    <input type="text" id="your-name" placeholder="Enter your name">
+            <div id="lobby-info" style="display: none;">
+                <div id="room-info">
+                    <p>Code: <span id="room-code-display" class="room-code"></span></p>
                 </div>
-            </div>
-            
-            <div id="players-list" class="players-list">
-                <h3>Players in Room:</h3>
+                
+                <div class="player-inputs">
+                    <div class="input-group">
+                        <input type="text" id="your-name" placeholder="Enter your name">
+                    </div>
+                </div>
+                
                 <div id="players-container">
                     <!-- Players will be populated by JavaScript -->
                 </div>
+                
+                <p id="lobby-status">Waiting...</p>
+                
+                <button id="start-online-game" onclick="startOnlineGame()" class="main-btn" disabled>Begin Journey</button>
             </div>
-            
-            <button id="start-online-game" onclick="startOnlineGame()" class="main-btn" disabled>Begin Journey</button>
-            <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 15px;">
-                Both players must enter their name and click "Begin Journey" to start
-            </p>
         </div>
     </div>
 
@@ -157,20 +163,20 @@
     <!-- Game Screen -->
     <div id="game-screen" class="screen">
         <div class="container">
-            <!-- Round Info -->
-            <div class="round-header">
+            <!-- Round Info - Hidden for cleaner UI -->
+            <div id="round-header" class="round-header" style="display: none;">
                 <h2 id="round-title">Round 1 - Getting Started</h2>
                 <p id="round-subtitle">Choose a category and draw a question</p>
             </div>
 
             <!-- Current Turn Info -->
-            <div class="turn-info">
+            <div id="turn-info" class="turn-info">
                 <p id="current-turn" class="turn-text">Player 1's turn to choose and ask</p>
             </div>
 
             <!-- Category Selection -->
             <div id="category-selection" class="category-selection">
-                <h3>Choose a category:</h3>
+                <h3>Pick a topic:</h3>
                 <div id="categories-container" class="categories-container">
                     <!-- Categories will be populated by JavaScript -->
                 </div>
@@ -218,13 +224,9 @@
     <!-- Game Complete Screen -->
     <div id="complete-screen" class="screen">
         <div class="container">
-            <h2 class="screen-title">Journey Complete!</h2>
-            <p class="screen-subtitle">Thank you for connecting and discovering more about each other</p>
-            <div class="complete-message">
-                <p>You've shared meaningful moments and learned something new about each other.</p>
-                <p>The strongest connections are built one conversation at a time.</p>
+            <div id="complete-content" style="display: none;">
+                <button onclick="restartGame()" class="main-btn">Start New Journey</button>
             </div>
-            <button onclick="restartGame()" class="main-btn">Start New Journey</button>
         </div>
     </div>
 
