@@ -115,29 +115,18 @@ const categories = ['family', 'romantic', 'friends', 'other'];
 
 function showCreateGame() {
     console.log('showCreateGame() called');
-    console.trace('showCreateGame call stack');
     
     try {
         currentCategoryIndex = 0;
         
-        // Hide the current screen immediately to prevent flashing
-        const currentScreen = document.querySelector('.screen.active');
-        if (currentScreen) {
-            currentScreen.classList.remove('active');
-            console.log('Removed active class from current screen');
-        }
+        // Simply show the relationship screen directly
+        showScreen('relationship-screen');
         
-        const messages = [
-            { text: "Choose Your Relationship", type: "title", duration: 1500 },
-            { text: "We'll tailor questions just for you", type: "subtitle", duration: 2000 }
-        ];
-        
-        console.log('About to show sequential messages');
-        showSequentialMessages(messages, () => {
-            console.log('Sequential messages complete, showing relationship screen');
-            showScreen('relationship-screen');
+        // Show the first category
+        setTimeout(() => {
             showCurrentCategory();
-        });
+        }, 100);
+        
     } catch (error) {
         console.error('Error in showCreateGame:', error);
     }
@@ -175,26 +164,11 @@ function showPrevCategory() {
 
 function showJoinGame() {
     console.log('showJoinGame() called');
-    console.trace('showJoinGame call stack');
     
     try {
-        // Hide the current screen immediately to prevent flashing
-        const currentScreen = document.querySelector('.screen.active');
-        if (currentScreen) {
-            currentScreen.classList.remove('active');
-            console.log('Removed active class from current screen');
-        }
+        // Simply show the join screen directly
+        showScreen('join-screen');
         
-        const messages = [
-            { text: "Join a Game", type: "title", duration: 1500 },
-            { text: "Enter your partner's game code", type: "subtitle", duration: 2000 }
-        ];
-        
-        console.log('About to show sequential messages');
-        showSequentialMessages(messages, () => {
-            console.log('Sequential messages complete, showing join screen');
-            showScreen('join-screen');
-        });
     } catch (error) {
         console.error('Error in showJoinGame:', error);
     }
