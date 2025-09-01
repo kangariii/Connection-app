@@ -810,11 +810,8 @@ function handleRoomUpdate(roomData) {
         currentRelationshipType = roomData.relationshipType;
     }
     
-    // Update players display
-    updatePlayersDisplay(playerList.map(p => ({
-        name: p.name || `Player ${p.playerNumber}`,
-        ready: p.ready || false
-    })));
+    // Update players display (removed for cleaner UI)
+    // updatePlayersDisplay();
     
     // Check if both players are connected
     if (playerList.length >= 2) {
@@ -849,21 +846,9 @@ function handleFirebaseMessage(messageData) {
     }
 }
 
-function updatePlayersDisplay(players) {
-    const container = document.getElementById('players-container');
-    container.innerHTML = '';
-    
-    players.forEach((player, index) => {
-        const playerDiv = document.createElement('div');
-        playerDiv.className = 'player-item';
-        const readyText = player.ready ? ' ✓ Ready' : ' - Not Ready';
-        playerDiv.textContent = `${index + 1}. ${player.name}${readyText}`;
-        if (player.ready) {
-            playerDiv.style.color = '#4CAF50';
-            playerDiv.style.fontWeight = '600';
-        }
-        container.appendChild(playerDiv);
-    });
+function updatePlayersDisplay() {
+    // Players display removed for cleaner UI
+    // This function is kept for compatibility but does nothing
 }
 
 async function startOnlineGame() {
