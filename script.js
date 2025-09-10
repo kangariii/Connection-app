@@ -491,6 +491,40 @@ function hideCategorySelection(callback) {
     }, 600);
 }
 
+function getRandomQuestion(category, relationshipType, round) {
+    console.log(`getRandomQuestion: category=${category}, relationshipType=${relationshipType}, round=${round}`);
+    
+    // Check if questions database exists
+    if (!window.questionsDatabase) {
+        console.error('Questions database not loaded!');
+        return null;
+    }
+    
+    const roundData = window.questionsDatabase[round];
+    if (!roundData) {
+        console.error(`No data found for round ${round}`);
+        return null;
+    }
+    
+    const categoryData = roundData[category];
+    if (!categoryData) {
+        console.error(`No data found for category ${category} in round ${round}`);
+        return null;
+    }
+    
+    // Try to get relationship-specific questions first, then fall back to universal
+    let questionArray = categoryData[relationshipType] || categoryData.universal;
+    
+    if (!questionArray || questionArray.length === 0) {
+        console.error(`No questions found for category ${category}, relationship ${relationshipType}, round ${round}`);
+        return null;
+    }
+    
+    // Return a random question
+    const randomIndex = Math.floor(Math.random() * questionArray.length);
+    return questionArray[randomIndex];
+}
+
 function displayQuestionWithAnimation(category, question) {
     // Set question content
     document.getElementById('question-category').textContent = category;
