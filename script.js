@@ -501,12 +501,12 @@ function getRandomQuestion(category, relationshipType, round) {
     console.log(`getRandomQuestion: category=${category}, relationshipType=${relationshipType}, round=${round}`);
     
     // Check if questions database exists
-    if (!window.questionsDatabase) {
+    if (typeof questionsDatabase === 'undefined') {
         console.error('Questions database not loaded!');
         return null;
     }
     
-    const roundData = window.questionsDatabase[round];
+    const roundData = questionsDatabase[round];
     if (!roundData) {
         console.error(`No data found for round ${round}`);
         return null;
@@ -518,8 +518,38 @@ function getRandomQuestion(category, relationshipType, round) {
         return null;
     }
     
+    // Map specific relationship types to general categories
+    function mapRelationshipType(relationshipType) {
+        if (!relationshipType) return 'universal';
+        
+        // Family relationships
+        if (relationshipType.includes('brother') || relationshipType.includes('sister') || 
+            relationshipType.includes('mother') || relationshipType.includes('father') ||
+            relationshipType.includes('grandfather') || relationshipType.includes('grandmother') ||
+            relationshipType.includes('cousin')) {
+            return 'family';
+        }
+        
+        // Romantic relationships
+        if (relationshipType.includes('dating') || relationshipType.includes('engaged') || 
+            relationshipType.includes('married')) {
+            return 'romantic';
+        }
+        
+        // Friend relationships
+        if (relationshipType.includes('friend')) {
+            return 'friends';
+        }
+        
+        // Default to universal for unknown types
+        return 'universal';
+    }
+    
+    const mappedRelationshipType = mapRelationshipType(relationshipType);
+    console.log(`Mapped ${relationshipType} to ${mappedRelationshipType}`);
+    
     // Try to get relationship-specific questions first, then fall back to universal
-    let questionArray = categoryData[relationshipType] || categoryData.universal;
+    let questionArray = categoryData[mappedRelationshipType] || categoryData.universal;
     
     if (!questionArray || questionArray.length === 0) {
         console.error(`No questions found for category ${category}, relationship ${relationshipType}, round ${round}`);
