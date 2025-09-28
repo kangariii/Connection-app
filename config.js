@@ -28,11 +28,16 @@ async function initializeFirebase() {
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         database = firebase.database();
+        
+        // Test database connection
+        await database.ref('.info/connected').once('value');
+        
         isFirebaseConnected = true;
         console.log('Firebase connected successfully');
         return true;
     } catch (error) {
         console.error('Firebase initialization failed:', error);
+        console.error('This might be due to database rules. Check Firebase Console > Realtime Database > Rules');
         isFirebaseConnected = false;
         return false;
     }
