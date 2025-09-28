@@ -73,10 +73,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Initialize Firebase
     try {
-        await initializeFirebase();
-        console.log('Firebase initialization completed');
+        const firebaseResult = await initializeFirebase();
+        if (firebaseResult) {
+            console.log('Firebase initialization completed - Online mode available');
+        } else {
+            console.log('Firebase initialization failed - Offline mode only');
+            isFirebaseConnected = false;
+        }
     } catch (error) {
         console.error('Error during Firebase initialization:', error);
+        isFirebaseConnected = false;
     }
     
     // Add click event listeners as backup
@@ -745,12 +751,21 @@ async function createGameRoom() {
         
         createRoom(roomCode, playerId, currentRelationshipType)
             .then(() => {
+                isOnlineMode = true;
                 setupRoomListeners();
                 document.getElementById('lobby-status').textContent = 'Waiting...';
             })
             .catch(error => {
                 console.error('Failed to create room:', error);
-                document.getElementById('lobby-status').textContent = 'Connection failed';
+                // Fall back to offline mode instead of failing
+                console.log('Switching to offline mode due to connection failure');
+                isOnlineMode = false;
+                isFirebaseConnected = false;
+                document.getElementById('lobby-status').textContent = 'Offline mode - Ready to begin';
+                
+                // Enable the start button for offline play
+                document.getElementById('start-online-game').disabled = false;
+                document.getElementById('start-online-game').textContent = 'Begin Journey (Offline)';
             });
     });
 }
@@ -787,12 +802,21 @@ async function joinGameRoom() {
         
         joinRoom(roomCode, playerId, 'Player 2')
             .then(() => {
+                isOnlineMode = true;
                 setupRoomListeners();
                 document.getElementById('lobby-status').textContent = 'Ready to begin?';
             })
             .catch(error => {
                 console.error('Failed to join game:', error);
-                document.getElementById('lobby-status').textContent = 'Connection failed';
+                // Fall back to offline mode instead of failing
+                console.log('Switching to offline mode due to connection failure');
+                isOnlineMode = false;
+                isFirebaseConnected = false;
+                document.getElementById('lobby-status').textContent = 'Offline mode - Ready to begin';
+                
+                // Enable the start button for offline play
+                document.getElementById('start-online-game').disabled = false;
+                document.getElementById('start-online-game').textContent = 'Begin Journey (Offline)';
             });
     });
 }
@@ -892,9 +916,15 @@ async function startOnlineGame() {
         return;
     }
     
-    // Check if Firebase is connected
+    // Check if Firebase is connected, if not start offline game
     if (!isFirebaseConnected) {
-        alert('Not connected to Firebase. Please refresh and try again.');
+        console.log('Starting offline game');
+        // Set player names for offline mode
+        player1Name = yourName;
+        player2Name = 'Player 2'; // Default for offline
+        
+        // Start the game directly in offline mode
+        startGame();
         return;
     }
     
