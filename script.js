@@ -122,10 +122,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else {
         console.error('Join Game button not found!');
     }
-    
-    console.log('About to show welcome screen');
-    showScreen('welcome-screen');
-    console.log('Welcome screen should now be visible');
 });
 
 function showCreateGame() {
