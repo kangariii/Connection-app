@@ -470,26 +470,30 @@ function displayCategories(categories) {
 }
 
 function selectCategory(category) {
+    console.log(`=== SELECT CATEGORY CALLED ===`);
     console.log(`Player ${currentPlayer} selected category: ${category}`);
-    
+    console.log(`Current round: ${currentRound}, Relationship: ${currentRelationshipType}`);
+
     // Validate it's this player's turn
     if (isOnlineMode && playerNumber !== currentPlayer) {
         console.log(`selectCategory: Not player ${playerNumber}'s turn (current turn: ${currentPlayer})`);
         alert(`It's not your turn! Wait for Player ${currentPlayer} to finish.`);
         return;
     }
-    
+
     // Get a random question from this category for current relationship and round
     const question = getRandomQuestion(category, currentRelationshipType, currentRound);
-    
+    console.log(`Question retrieved: ${question ? 'YES' : 'NO'}`);
+
     if (question) {
+        console.log(`Hiding category selection and showing question...`);
         // Hide category selection with animation, then show question
         hideCategorySelection(() => {
             displayQuestionWithAnimation(category, question);
         });
     } else {
-        console.error('No question found for category:', category);
-        alert('Sorry, no questions available for this category. Please try another.');
+        console.error(`CRITICAL ERROR: No question found for category: ${category}, round: ${currentRound}, relationship: ${currentRelationshipType}`);
+        alert(`Sorry, no questions available for this category (${category}) in Round ${currentRound}. This is a bug - please try another category or refresh the page.`);
     }
 }
 
@@ -573,12 +577,29 @@ function getRandomQuestion(category, relationshipType, round) {
 }
 
 function displayQuestionWithAnimation(category, question) {
+    console.log(`displayQuestionWithAnimation called - Category: ${category}, Question: ${question}`);
+
+    if (!question || question.trim() === '') {
+        console.error('ERROR: Attempting to display empty question!');
+        alert('Error: No question to display. Please try selecting another category.');
+        return;
+    }
+
     // Store current question for saving functionality
     currentQuestion = question;
 
     // Set question content
-    document.getElementById('question-category').textContent = category;
-    document.getElementById('question-text').textContent = question;
+    const categoryEl = document.getElementById('question-category');
+    const textEl = document.getElementById('question-text');
+
+    if (!categoryEl || !textEl) {
+        console.error('ERROR: Question display elements not found in DOM!');
+        return;
+    }
+
+    categoryEl.textContent = category;
+    textEl.textContent = question;
+    console.log(`Set question text successfully: "${question.substring(0, 50)}..."`);
 
     // Reset save button state
     const saveBtn = document.getElementById('save-question-btn');
@@ -586,16 +607,23 @@ function displayQuestionWithAnimation(category, question) {
         saveBtn.classList.remove('saved');
         saveBtn.innerHTML = '<span class="heart-icon">♡</span> Save Question';
     }
-    
+
     // Show question display with animation
     const questionDisplay = document.getElementById('question-display');
+    if (!questionDisplay) {
+        console.error('ERROR: Question display element not found!');
+        return;
+    }
+
     questionDisplay.classList.remove('hidden');
-    
+    console.log('Removed hidden class from question display');
+
     setTimeout(() => {
         questionDisplay.classList.add('show');
+        console.log('Added show class to question display - animation should start');
     }, 100);
-    
-    console.log(`Displaying question with animation: ${question}`);
+
+    console.log(`✓ Question displayed successfully`);
 }
 
 

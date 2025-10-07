@@ -47,7 +47,7 @@ body {
     align-items: flex-start;
     justify-content: center;
     padding-top: 40px;
-    padding-bottom: 40px;
+    padding-bottom: 80px;
 }
 
 @keyframes fadeIn {
@@ -1276,12 +1276,14 @@ body {
 @media (max-width: 768px) {
     .screen {
         align-items: flex-start !important;
+        padding-bottom: 100px !important;
     }
 
     .container {
         padding: 20px;
         margin: 10px;
         min-height: auto;
+        margin-bottom: 20px;
     }
     
     .title {
@@ -1403,6 +1405,10 @@ body {
 }
 
 @media (max-width: 480px) {
+    .screen {
+        padding-bottom: 120px !important;
+    }
+
     .title {
         font-size: 2rem;
     }
@@ -1422,6 +1428,7 @@ body {
 
     .container {
         padding: 15px;
+        margin-bottom: 30px;
     }
     
     /* Sequential message mobile improvements for small screens */
