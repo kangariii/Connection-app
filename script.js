@@ -534,26 +534,28 @@ function getRandomQuestion(category, relationshipType, round) {
     // Map specific relationship types to general categories
     function mapRelationshipType(relationshipType) {
         if (!relationshipType) return 'universal';
-        
+
         // Family relationships
-        if (relationshipType.includes('brother') || relationshipType.includes('sister') || 
+        if (relationshipType.includes('brother') || relationshipType.includes('sister') ||
             relationshipType.includes('mother') || relationshipType.includes('father') ||
             relationshipType.includes('grandfather') || relationshipType.includes('grandmother') ||
             relationshipType.includes('cousin')) {
             return 'family';
         }
-        
+
         // Romantic relationships
-        if (relationshipType.includes('dating') || relationshipType.includes('engaged') || 
-            relationshipType.includes('married')) {
+        if (relationshipType.includes('dating') || relationshipType.includes('engaged') ||
+            relationshipType.includes('married') || relationshipType.includes('partners')) {
             return 'romantic';
         }
-        
-        // Friend relationships
-        if (relationshipType.includes('friend')) {
+
+        // Friend relationships (includes colleagues, roommates, neighbors, etc.)
+        if (relationshipType.includes('friend') || relationshipType.includes('colleague') ||
+            relationshipType.includes('roommate') || relationshipType.includes('neighbor') ||
+            relationshipType.includes('mentor')) {
             return 'friends';
         }
-        
+
         // Default to universal for unknown types
         return 'universal';
     }

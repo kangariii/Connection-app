@@ -192,7 +192,13 @@ const questionsDatabase = {
                 "What's something you collect that might surprise people?",
                 "What's the most interesting place you've ever been?",
                 "What's a fear you had as a child that seems silly now?",
-                "What's something you're curious about but have never tried?"
+                "What's something you're curious about but have never tried?",
+                "What movie or TV show have you watched the most times?",
+                "What smell instantly transports you to a specific memory?",
+                "If you could have dinner with any fictional character, who would it be?",
+                "What's a sound that you find oddly satisfying or comforting?",
+                "What's a book, movie, or song that changed your perspective on something?",
+                "What's your most irrational pet peeve?"
             ],
             family: [
                 "What's a talent you have that the family doesn't see very often?",
@@ -220,19 +226,19 @@ const questionsDatabase = {
                 "What's something from your past that shaped who you are today?",
                 "What's a quirky habit you have that you think is endearing?",
                 "What's something you hope we'll discover together in the future?",
-                "What's a secret dream you haven't shared with me yet?",
-                "What's something about your childhood that explains who you are now?",
                 "What's a random skill you have that I'd find attractive?",
-                "What's something you were afraid to tell me when we first started dating?",
                 "What's a part of your personality that only comes out with me?",
                 "What's something you want to learn together as a couple?",
                 "What's a weird thing that instantly makes you think of me?",
                 "What's something about love that you never understood until us?",
-                "What's a risk you took in our relationship that paid off?",
                 "What's something about yourself that being with me has brought out?",
-                "What's a couple's goal that excites and terrifies you?",
                 "What's something you hope we'll still be doing when we're old?",
-                "What's a unique thing about our relationship that you love?"
+                "What's a unique thing about our relationship that you love?",
+                "What's the most ridiculous thing you've ever done to impress me?",
+                "What song or movie always reminds you of us?",
+                "What's your favorite way we're different from each other?",
+                "What's something silly about me that you secretly love?",
+                "What's a place you'd love to take me someday?"
             ],
             friends: [
                 "What's a hobby or interest you've been wanting to explore?",
@@ -317,8 +323,12 @@ const questionsDatabase = {
                 "Would you rather have a relationship that's the envy of others or one that's uniquely ours?",
                 "Would you rather have one perfect day together on repeat or a lifetime of good days?",
                 "Would you rather be wealthy together or poor but deeply in love?",
-                "Would you rather have three kids or no kids but unlimited time for each other?",
-                "Would you rather have a marriage that lasts 50 years or a love that spans multiple lifetimes?"
+                "Would you rather have a big family with lots of kids or a small intimate family?",
+                "Would you rather have a marriage that lasts 50 years or a love that spans multiple lifetimes?",
+                "What's something you were nervous to tell me early on that turned out fine?",
+                "What's a secret dream you haven't fully shared with me yet?",
+                "What's a risk you took in our relationship that paid off?",
+                "What's a couple's goal that both excites and scares you?"
             ],
             friends: [
                 "Would you rather have a few very close friends or many casual friends?",
@@ -515,7 +525,7 @@ const questionsDatabase = {
                 "What's something you used to believe strongly that you've changed your mind about?",
                 "What do you believe is the most important quality in a person?",
                 "What's a belief you have about life that guides your daily decisions?",
-                "What do you believe happens when we die?",
+                "What gives you comfort or peace when thinking about mortality and the passage of time?",
                 "What's a belief about human nature that has been confirmed by your experiences?",
                 "What do you believe is the purpose of suffering in life?",
                 "What's a belief you have about success and happiness?",
@@ -610,7 +620,11 @@ const questionsDatabase = {
                 "How do you handle it when relationships change or end?",
                 "What's the role of forgiveness in maintaining healthy relationships?",
                 "How do you distinguish between healthy and unhealthy relationship patterns?",
-                "What's something about communication that's crucial for good relationships?"
+                "What's something about communication that's crucial for good relationships?",
+                "What's the best way someone has resolved a conflict with you?",
+                "How do you know when to speak up in a disagreement versus letting something go?",
+                "What's something you've learned about repairing relationships after conflict?",
+                "How do you handle conversations when emotions are running high?"
             ],
             family: [
                 "What's something about family relationships that you understand now that you didn't as a child?",
@@ -858,7 +872,7 @@ const questionsDatabase = {
                 "When do you feel most connected to something larger than yourself?",
                 "What emotion do you think you've gotten better at managing over time?",
                 "What's something that makes you feel most proud of who you are?",
-                "When do you allow yourself to be sad, and how do you process that emotion?",
+                "How do you experience and process sadness?",
                 "What emotion do you wish you could experience more often?",
                 "What's something that helps you feel grounded when emotions feel overwhelming?"
             ],
@@ -1110,7 +1124,13 @@ const questionsDatabase = {
                 "What's a way you sometimes feel like you're not enough?",
                 "What's something about aging or mortality that concerns you?",
                 "What's a fear about disappointment or failure that affects your choices?",
-                "What's something you need reassurance about more often than you'd like to admit?"
+                "What's something you need reassurance about more often than you'd like to admit?",
+                "What's a small thing that makes you feel irrationally anxious?",
+                "What's something you're embarrassed about wanting?",
+                "What's a compliment you struggle to believe when people say it?",
+                "What's a way you compare yourself to others that makes you feel inadequate?",
+                "What's something you pretend not to care about but actually do?",
+                "What's a mistake from your past that you still think about?"
             ],
             family: [
                 "What's a fear you have about our family's future?",
@@ -1130,7 +1150,11 @@ const questionsDatabase = {
                 "What's a fear about not being able to live up to family values or legacy?",
                 "What's something you struggle with that you wish our family understood better?",
                 "What's a way you sometimes feel burdened by family responsibilities or expectations?",
-                "What's something about being vulnerable with family that's difficult for you?"
+                "What's something about being vulnerable with family that's difficult for you?",
+                "What's something small you wish our family knew about you?",
+                "What's a way you wish our family showed love that would feel good to you?",
+                "What's something you need from our family that you haven't asked for?",
+                "What's a childhood need that you're still working through?"
             ],
             romantic: [
                 "What's a fear you have about our relationship that you don't often share?",
@@ -1150,7 +1174,11 @@ const questionsDatabase = {
                 "What's something about conflict or disagreement that makes you feel vulnerable with me?",
                 "What's a way you sometimes worry about being truly known by me?",
                 "What's something about commitment that both excites and frightens you?",
-                "What's a fear about your own capacity to love or be loved fully?"
+                "What's a fear about your own capacity to love or be loved fully?",
+                "What's a silly insecurity you have about us?",
+                "What's something small that would make you feel more loved?",
+                "What's a minor annoyance you've never mentioned?",
+                "What's something you wish I knew without you having to say it?"
             ],
             friends: [
                 "What's something you're insecure about in your friendships?",
@@ -1170,7 +1198,11 @@ const questionsDatabase = {
                 "What's something you worry you bring to friendships that might be challenging?",
                 "What's a way you sometimes compare yourself to other friends?",
                 "What's something about needing friends that makes you feel vulnerable?",
-                "What's a fear about whether your friendships will last through major life changes?"
+                "What's a fear about whether your friendships will last through major life changes?",
+                "What's something you wish your friends knew about what you need?",
+                "What's a small way friends could support you better?",
+                "What's something about yourself in friendships that you overthink?",
+                "What's a friendship pattern you'd like to change but haven't?"
             ]
         },
         "Future": {
