@@ -26,10 +26,14 @@ body {
 /* Screen Management */
 .screen {
     display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    min-height: 100vh;
+    height: 100vh;
     padding: 20px;
     animation: fadeIn 0.5s ease-in-out;
+    z-index: 10;
 }
 
 .screen.active {
@@ -48,6 +52,7 @@ body {
     display: flex !important;
     opacity: 1;
     transition: opacity 0.8s ease-out;
+    z-index: 20;
 }
 
 .splash-screen.fade-out {
