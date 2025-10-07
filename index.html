@@ -184,6 +184,14 @@
                 <p id="round-subtitle">Choose a category and draw a question</p>
             </div>
 
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <p class="progress-text"><span id="current-round-num">1</span> of 5 rounds</p>
+            </div>
+
             <!-- Current Turn Info -->
             <div id="turn-info" class="turn-info">
                 <p id="current-turn" class="turn-text">Player 1's turn to choose and ask</p>
@@ -203,7 +211,12 @@
                     <h3 id="question-category">Category</h3>
                     <p id="question-text">Question will appear here</p>
                 </div>
-                <button onclick="nextTurn()" class="main-btn">Answer Complete</button>
+                <div class="question-actions">
+                    <button onclick="saveQuestion()" class="secondary-btn" id="save-question-btn">
+                        <span class="heart-icon">♡</span> Save Question
+                    </button>
+                    <button onclick="nextTurn()" class="main-btn">Answer Complete</button>
+                </div>
             </div>
 
             <!-- Waiting/Answering State -->
@@ -242,7 +255,17 @@
     <div id="complete-screen" class="screen">
         <div class="container">
             <div id="complete-content" style="display: none;">
-                <button onclick="restartGame()" class="main-btn">Start New Journey</button>
+                <h2 class="complete-title">Journey Complete!</h2>
+                <p class="complete-message">You've shared meaningful moments and deepened your connection</p>
+
+                <div id="saved-questions-summary" class="saved-summary">
+                    <!-- Will be populated by JavaScript if questions were saved -->
+                </div>
+
+                <div class="complete-actions">
+                    <button onclick="shareExperience()" class="secondary-btn">Share Your Journey</button>
+                    <button onclick="restartGame()" class="main-btn">Start New Journey</button>
+                </div>
             </div>
         </div>
     </div>

@@ -6,6 +6,8 @@ let currentRound = 1;
 let currentPlayer = 1; // 1 or 2
 let roundTurns = 0; // tracks turns within current round (max 2 per round)
 let gameData = null;
+let savedQuestions = []; // Track saved questions
+let currentQuestion = ''; // Track current question for saving
 
 // Multiplayer State Variables
 let isOnlineMode = false;
@@ -209,25 +211,28 @@ function startRound(roundNumber) {
     currentRound = roundNumber;
     roundTurns = 0;
     currentPlayer = 1;
-    
+
     console.log(`Starting Round ${roundNumber} with presentation flow`);
-    
+
+    // Update progress bar
+    updateProgressBar();
+
     const roundConfig = roundConfigs[roundNumber];
     if (!roundConfig) {
         console.error(`No round config found for round ${roundNumber}`);
         alert(`Error: Round ${roundNumber} configuration not found.`);
         return;
     }
-    
+
     // Show game screen first (hidden state)
     showScreen('game-screen');
-    
+
     // Reset all display states to hidden
     const elements = [
-        'round-header', 'turn-info', 'category-selection', 
+        'round-header', 'turn-info', 'category-selection',
         'question-display', 'round-complete', 'waiting-state'
     ];
-    
+
     elements.forEach(elementId => {
         const element = document.getElementById(elementId);
         if (element) {
@@ -239,9 +244,20 @@ function startRound(roundNumber) {
             console.error(`Element with id '${elementId}' not found`);
         }
     });
-    
+
     // Start the presentation sequence
     presentRoundFlow(roundNumber, roundConfig);
+}
+
+function updateProgressBar() {
+    const progressFill = document.getElementById('progress-fill');
+    const roundNum = document.getElementById('current-round-num');
+
+    if (progressFill && roundNum) {
+        const percentage = (currentRound / 5) * 100;
+        progressFill.style.width = percentage + '%';
+        roundNum.textContent = currentRound;
+    }
 }
 
 function presentRoundFlow(roundNumber, roundConfig) {
@@ -549,9 +565,19 @@ function getRandomQuestion(category, relationshipType, round) {
 }
 
 function displayQuestionWithAnimation(category, question) {
+    // Store current question for saving functionality
+    currentQuestion = question;
+
     // Set question content
     document.getElementById('question-category').textContent = category;
     document.getElementById('question-text').textContent = question;
+
+    // Reset save button state
+    const saveBtn = document.getElementById('save-question-btn');
+    if (saveBtn) {
+        saveBtn.classList.remove('saved');
+        saveBtn.innerHTML = '<span class="heart-icon">♡</span> Save Question';
+    }
     
     // Show question display with animation
     const questionDisplay = document.getElementById('question-display');
@@ -638,10 +664,26 @@ function completeGame() {
     showSequentialMessages(messages, () => {
         showScreen('complete-screen');
         setTimeout(() => {
+            displaySavedQuestions();
             document.getElementById('complete-content').style.display = 'block';
             document.getElementById('complete-content').classList.add('show');
         }, 1000);
     });
+}
+
+function displaySavedQuestions() {
+    const summaryDiv = document.getElementById('saved-questions-summary');
+
+    if (savedQuestions.length > 0) {
+        summaryDiv.innerHTML = `
+            <h3>Your Saved Questions (${savedQuestions.length})</h3>
+            <ul>
+                ${savedQuestions.map(q => `<li>${q}</li>`).join('')}
+            </ul>
+        `;
+    } else {
+        summaryDiv.innerHTML = '';
+    }
 }
 
 function restartGame() {
@@ -722,6 +764,46 @@ function restartGame() {
     showScreen('welcome-screen');
     
     console.log('Game restarted - should now be on welcome screen');
+
+    // Clear saved questions
+    savedQuestions = [];
+}
+
+// Save & Share Functions
+function saveQuestion() {
+    const saveBtn = document.getElementById('save-question-btn');
+
+    // Check if already saved
+    if (savedQuestions.includes(currentQuestion)) {
+        // Unsave
+        savedQuestions = savedQuestions.filter(q => q !== currentQuestion);
+        saveBtn.classList.remove('saved');
+        saveBtn.innerHTML = '<span class="heart-icon">♡</span> Save Question';
+    } else {
+        // Save
+        savedQuestions.push(currentQuestion);
+        saveBtn.classList.add('saved');
+        saveBtn.innerHTML = '<span class="heart-icon">♥</span> Saved';
+    }
+}
+
+function shareExperience() {
+    const shareText = `I just deepened my connection with someone special using Who Are You! 💭 We explored meaningful questions and created lasting memories. Try it yourself!`;
+
+    if (navigator.share) {
+        navigator.share({
+            title: 'Who Are You?',
+            text: shareText,
+            url: window.location.href
+        }).catch(err => console.log('Share cancelled', err));
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(shareText + '\n' + window.location.href).then(() => {
+            alert('Share text copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+        });
+    }
 }
 
 // Multiplayer Functions
