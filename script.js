@@ -72,7 +72,17 @@ function showScreen(screenId) {
 // Initialize the game
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Who Are You? App Initialized - DOM Content Loaded');
-    
+
+    // Show splash screen transition
+    setTimeout(() => {
+        const splashScreen = document.getElementById('splash-screen');
+        splashScreen.classList.add('fade-out');
+
+        setTimeout(() => {
+            showScreen('welcome-screen');
+        }, 800); // Wait for fade out to complete
+    }, 2500); // Show splash for 2.5 seconds
+
     // Initialize Firebase
     try {
         const firebaseResult = await initializeFirebase();
