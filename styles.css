@@ -1290,8 +1290,18 @@ body {
     
     .screen-title {
         font-size: 2rem;
+        padding-top: 50px;
+        margin-top: 0;
     }
-    
+
+    .back-btn {
+        top: 10px;
+        left: 10px;
+        font-size: 0.85rem;
+        padding: 8px 12px;
+        z-index: 100;
+    }
+
     /* Sequential message mobile improvements */
     .round-announcement-title {
         font-size: 3rem !important;
