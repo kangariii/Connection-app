@@ -11,19 +11,14 @@
     <!-- Welcome Screen -->
     <div id="welcome-screen" class="screen active">
         <div class="container welcome-container">
-            <div class="logo-container">
-                <span class="logo-icon">💬</span>
-            </div>
             <h1 class="title">Who Are You?</h1>
             <p class="subtitle">Deepen your connection through meaningful questions</p>
             <div class="mode-buttons">
                 <button onclick="showCreateGame()" class="mode-btn">
-                    <span class="btn-icon">✨</span>
                     <h3>Create Game</h3>
                     <p>Choose relationship type and get a game code</p>
                 </button>
                 <button onclick="showJoinGame()" class="mode-btn">
-                    <span class="btn-icon">🔗</span>
                     <h3>Join Game</h3>
                     <p>Enter a game code to join</p>
                 </button>
@@ -41,7 +36,7 @@
                 <!-- Family Relationships -->
                 <div class="category-dropdown">
                     <button class="category-header" onclick="toggleCategory('family')">
-                        <span><span class="category-emoji">👨‍👩‍👧‍👦</span> Family</span>
+                        <span>Family</span>
                         <span class="dropdown-icon">▼</span>
                     </button>
                     <div class="category-content" data-category="family">
@@ -67,7 +62,7 @@
                 <!-- Romantic Relationships -->
                 <div class="category-dropdown">
                     <button class="category-header" onclick="toggleCategory('romantic')">
-                        <span><span class="category-emoji">💕</span> Romantic</span>
+                        <span>Romantic</span>
                         <span class="dropdown-icon">▼</span>
                     </button>
                     <div class="category-content" data-category="romantic">
@@ -83,7 +78,7 @@
                 <!-- Friends -->
                 <div class="category-dropdown">
                     <button class="category-header" onclick="toggleCategory('friends')">
-                        <span><span class="category-emoji">👥</span> Friends</span>
+                        <span>Friends</span>
                         <span class="dropdown-icon">▼</span>
                     </button>
                     <div class="category-content" data-category="friends">
@@ -101,7 +96,7 @@
                 <!-- Other -->
                 <div class="category-dropdown">
                     <button class="category-header" onclick="toggleCategory('other')">
-                        <span><span class="category-emoji">🤝</span> Other</span>
+                        <span>Other</span>
                         <span class="dropdown-icon">▼</span>
                     </button>
                     <div class="category-content" data-category="other">
@@ -136,7 +131,6 @@
     <div id="lobby-screen" class="screen">
         <div class="container">
             <div id="lobby-info" style="display: none;">
-                <div class="lobby-icon">🎮</div>
                 <div id="room-info">
                     <p class="code-label">Game Code</p>
                     <div class="code-box">
@@ -158,7 +152,6 @@
 
                 <button id="start-online-game" onclick="startOnlineGame()" class="main-btn" disabled>
                     <span>Begin Journey</span>
-                    <span class="btn-arrow">→</span>
                 </button>
             </div>
         </div>
@@ -228,12 +221,10 @@
 
             <!-- Round Complete -->
             <div id="round-complete" class="round-complete hidden">
-                <div class="complete-icon">✨</div>
                 <h3>Round Complete!</h3>
                 <p>Ready for the next round?</p>
                 <button onclick="nextRound()" class="main-btn">
                     <span>Continue</span>
-                    <span class="btn-arrow">→</span>
                 </button>
             </div>
         </div>

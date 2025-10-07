@@ -57,47 +57,9 @@ body {
     color: white;
 }
 
-/* Logo & Icons */
-.logo-container {
-    margin-bottom: 20px;
-    animation: floatIn 1s ease-out;
-}
-
-.logo-icon {
-    font-size: 4rem;
-    display: inline-block;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes floatIn {
-    from {
-        opacity: 0;
-        transform: translateY(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-}
-
-.btn-icon {
-    font-size: 2rem;
-    display: block;
-    margin-bottom: 10px;
-}
-
-.category-emoji {
-    font-size: 1.2rem;
-    margin-right: 8px;
+/* Welcome Screen */
+.welcome-container {
+    animation: fadeIn 0.6s ease-out;
 }
 
 /* Typography */
@@ -192,14 +154,6 @@ body {
     transform: translateY(0);
 }
 
-.btn-arrow {
-    transition: transform 0.3s ease;
-    font-size: 1.2rem;
-}
-
-.main-btn:hover .btn-arrow {
-    transform: translateX(5px);
-}
 
 /* Relationship Selection */
 .relationship-categories {
@@ -523,39 +477,19 @@ body {
 /* Round Complete */
 .round-complete {
     text-align: center;
-}
-
-.complete-icon {
-    font-size: 4rem;
-    margin-bottom: 20px;
-    animation: celebrate 0.6s ease-out;
-}
-
-@keyframes celebrate {
-    0% {
-        transform: scale(0) rotate(0deg);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.2) rotate(180deg);
-    }
-    100% {
-        transform: scale(1) rotate(360deg);
-        opacity: 1;
-    }
+    animation: fadeIn 0.5s ease-out;
 }
 
 .round-complete h3 {
-    font-size: 1.8rem;
-    margin-bottom: 10px;
-    animation: fadeIn 0.5s ease-out 0.3s both;
+    font-size: 2rem;
+    margin-bottom: 15px;
+    font-weight: 600;
 }
 
 .round-complete p {
     font-size: 1.1rem;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
     opacity: 0.9;
-    animation: fadeIn 0.5s ease-out 0.5s both;
 }
 
 /* Waiting/Answering State */
@@ -788,22 +722,6 @@ body {
 }
 
 /* Room Lobby */
-.lobby-icon {
-    font-size: 4rem;
-    text-align: center;
-    margin-bottom: 20px;
-    animation: bounce 2s ease-in-out infinite;
-}
-
-@keyframes bounce {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
-}
-
 #room-info {
     margin-bottom: 30px;
     text-align: center;
