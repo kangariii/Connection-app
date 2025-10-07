@@ -11,10 +11,8 @@ body {
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow-x: hidden;
+    overflow: hidden;
+    position: relative;
 }
 
 @keyframes gradientShift {
@@ -34,12 +32,17 @@ body {
     padding: 20px;
     animation: fadeIn 0.5s ease-in-out;
     z-index: 10;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 .screen.active {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    padding-top: 40px;
+    padding-bottom: 40px;
 }
 
 @keyframes fadeIn {
@@ -1266,9 +1269,14 @@ body {
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+    .screen {
+        align-items: flex-start !important;
+    }
+
     .container {
         padding: 20px;
         margin: 10px;
+        min-height: auto;
     }
     
     .title {
