@@ -1406,11 +1406,20 @@ body {
     .title {
         font-size: 2rem;
     }
-    
+
     .screen-title {
         font-size: 1.8rem;
+        padding-top: 50px;
+        margin-top: 0;
     }
-    
+
+    .back-btn {
+        top: 10px;
+        left: 10px;
+        font-size: 0.8rem;
+        padding: 7px 10px;
+    }
+
     .container {
         padding: 15px;
     }
