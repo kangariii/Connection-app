@@ -10,15 +10,20 @@
 <body>
     <!-- Welcome Screen -->
     <div id="welcome-screen" class="screen active">
-        <div class="container">
+        <div class="container welcome-container">
+            <div class="logo-container">
+                <span class="logo-icon">💬</span>
+            </div>
             <h1 class="title">Who Are You?</h1>
             <p class="subtitle">Deepen your connection through meaningful questions</p>
             <div class="mode-buttons">
                 <button onclick="showCreateGame()" class="mode-btn">
+                    <span class="btn-icon">✨</span>
                     <h3>Create Game</h3>
                     <p>Choose relationship type and get a game code</p>
                 </button>
                 <button onclick="showJoinGame()" class="mode-btn">
+                    <span class="btn-icon">🔗</span>
                     <h3>Join Game</h3>
                     <p>Enter a game code to join</p>
                 </button>
@@ -36,7 +41,7 @@
                 <!-- Family Relationships -->
                 <div class="category-dropdown">
                     <button class="category-header" onclick="toggleCategory('family')">
-                        <span>Family</span>
+                        <span><span class="category-emoji">👨‍👩‍👧‍👦</span> Family</span>
                         <span class="dropdown-icon">▼</span>
                     </button>
                     <div class="category-content" data-category="family">
@@ -62,7 +67,7 @@
                 <!-- Romantic Relationships -->
                 <div class="category-dropdown">
                     <button class="category-header" onclick="toggleCategory('romantic')">
-                        <span>Romantic</span>
+                        <span><span class="category-emoji">💕</span> Romantic</span>
                         <span class="dropdown-icon">▼</span>
                     </button>
                     <div class="category-content" data-category="romantic">
@@ -78,7 +83,7 @@
                 <!-- Friends -->
                 <div class="category-dropdown">
                     <button class="category-header" onclick="toggleCategory('friends')">
-                        <span>Friends</span>
+                        <span><span class="category-emoji">👥</span> Friends</span>
                         <span class="dropdown-icon">▼</span>
                     </button>
                     <div class="category-content" data-category="friends">
@@ -96,7 +101,7 @@
                 <!-- Other -->
                 <div class="category-dropdown">
                     <button class="category-header" onclick="toggleCategory('other')">
-                        <span>Other</span>
+                        <span><span class="category-emoji">🤝</span> Other</span>
                         <span class="dropdown-icon">▼</span>
                     </button>
                     <div class="category-content" data-category="other">
@@ -131,20 +136,30 @@
     <div id="lobby-screen" class="screen">
         <div class="container">
             <div id="lobby-info" style="display: none;">
+                <div class="lobby-icon">🎮</div>
                 <div id="room-info">
-                    <p>Code: <span id="room-code-display" class="room-code"></span></p>
+                    <p class="code-label">Game Code</p>
+                    <div class="code-box">
+                        <span id="room-code-display" class="room-code"></span>
+                    </div>
                 </div>
-                
+
                 <div class="player-inputs">
                     <div class="input-group">
+                        <label for="your-name">Your Name</label>
                         <input type="text" id="your-name" placeholder="Enter your name">
                     </div>
                 </div>
-                
-                
-                <p id="lobby-status">Waiting...</p>
-                
-                <button id="start-online-game" onclick="startOnlineGame()" class="main-btn" disabled>Begin Journey</button>
+
+                <div class="status-container">
+                    <div class="status-dot"></div>
+                    <p id="lobby-status">Waiting...</p>
+                </div>
+
+                <button id="start-online-game" onclick="startOnlineGame()" class="main-btn" disabled>
+                    <span>Begin Journey</span>
+                    <span class="btn-arrow">→</span>
+                </button>
             </div>
         </div>
     </div>
@@ -213,9 +228,13 @@
 
             <!-- Round Complete -->
             <div id="round-complete" class="round-complete hidden">
+                <div class="complete-icon">✨</div>
                 <h3>Round Complete!</h3>
                 <p>Ready for the next round?</p>
-                <button onclick="nextRound()" class="main-btn">Continue</button>
+                <button onclick="nextRound()" class="main-btn">
+                    <span>Continue</span>
+                    <span class="btn-arrow">→</span>
+                </button>
             </div>
         </div>
     </div>
