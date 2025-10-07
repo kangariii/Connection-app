@@ -30,74 +30,82 @@
     <div id="relationship-screen" class="screen">
         <div class="container">
             <button onclick="showScreen('welcome-screen')" class="back-btn">← Back</button>
+            <h2 class="screen-title">Choose Your Relationship</h2>
+            <p class="screen-subtitle">Select the relationship type that best describes you</p>
             <div id="relationship-categories" class="relationship-categories">
                 <!-- Family Relationships -->
-                <div class="category-section" data-category="family" style="display: none;">
-                    <h3 class="category-title">Family</h3>
-                    <div class="relationship-grid">
-                        <button onclick="selectRelationship('brother-brother', this)" class="relationship-btn">Brother & Brother</button>
-                        <button onclick="selectRelationship('sister-sister', this)" class="relationship-btn">Sister & Sister</button>
-                        <button onclick="selectRelationship('brother-sister', this)" class="relationship-btn">Brother & Sister</button>
-                        <button onclick="selectRelationship('mother-son', this)" class="relationship-btn">Mother & Son</button>
-                        <button onclick="selectRelationship('mother-daughter', this)" class="relationship-btn">Mother & Daughter</button>
-                        <button onclick="selectRelationship('father-son', this)" class="relationship-btn">Father & Son</button>
-                        <button onclick="selectRelationship('father-daughter', this)" class="relationship-btn">Father & Daughter</button>
-                        <button onclick="selectRelationship('grandfather-grandson', this)" class="relationship-btn">Grandfather & Grandson</button>
-                        <button onclick="selectRelationship('grandfather-granddaughter', this)" class="relationship-btn">Grandfather & Granddaughter</button>
-                        <button onclick="selectRelationship('grandmother-grandson', this)" class="relationship-btn">Grandmother & Grandson</button>
-                        <button onclick="selectRelationship('grandmother-granddaughter', this)" class="relationship-btn">Grandmother & Granddaughter</button>
-                        <button onclick="selectRelationship('male-cousins', this)" class="relationship-btn">Male Cousins</button>
-                        <button onclick="selectRelationship('female-cousins', this)" class="relationship-btn">Female Cousins</button>
-                        <button onclick="selectRelationship('mixed-cousins', this)" class="relationship-btn">Male & Female Cousins</button>
-                    </div>
-                    <div class="category-nav">
-                        <button onclick="showNextCategory()" class="nav-btn">Next Category</button>
+                <div class="category-dropdown">
+                    <button class="category-header" onclick="toggleCategory('family')">
+                        <span>Family</span>
+                        <span class="dropdown-icon">▼</span>
+                    </button>
+                    <div class="category-content" data-category="family">
+                        <div class="relationship-grid">
+                            <button onclick="selectRelationship('brother-brother', this)" class="relationship-btn">Brother & Brother</button>
+                            <button onclick="selectRelationship('sister-sister', this)" class="relationship-btn">Sister & Sister</button>
+                            <button onclick="selectRelationship('brother-sister', this)" class="relationship-btn">Brother & Sister</button>
+                            <button onclick="selectRelationship('mother-son', this)" class="relationship-btn">Mother & Son</button>
+                            <button onclick="selectRelationship('mother-daughter', this)" class="relationship-btn">Mother & Daughter</button>
+                            <button onclick="selectRelationship('father-son', this)" class="relationship-btn">Father & Son</button>
+                            <button onclick="selectRelationship('father-daughter', this)" class="relationship-btn">Father & Daughter</button>
+                            <button onclick="selectRelationship('grandfather-grandson', this)" class="relationship-btn">Grandfather & Grandson</button>
+                            <button onclick="selectRelationship('grandfather-granddaughter', this)" class="relationship-btn">Grandfather & Granddaughter</button>
+                            <button onclick="selectRelationship('grandmother-grandson', this)" class="relationship-btn">Grandmother & Grandson</button>
+                            <button onclick="selectRelationship('grandmother-granddaughter', this)" class="relationship-btn">Grandmother & Granddaughter</button>
+                            <button onclick="selectRelationship('male-cousins', this)" class="relationship-btn">Male Cousins</button>
+                            <button onclick="selectRelationship('female-cousins', this)" class="relationship-btn">Female Cousins</button>
+                            <button onclick="selectRelationship('mixed-cousins', this)" class="relationship-btn">Male & Female Cousins</button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Romantic Relationships -->
-                <div class="category-section" data-category="romantic" style="display: none;">
-                    <h3 class="category-title">Romantic</h3>
-                    <div class="relationship-grid">
-                        <button onclick="selectRelationship('new-dating', this)" class="relationship-btn">New Dating Couple</button>
-                        <button onclick="selectRelationship('long-term-partners', this)" class="relationship-btn">Long-term Partners</button>
-                        <button onclick="selectRelationship('engaged', this)" class="relationship-btn">Engaged Couple</button>
-                        <button onclick="selectRelationship('married', this)" class="relationship-btn">Married Couple</button>
-                    </div>
-                    <div class="category-nav">
-                        <button onclick="showPrevCategory()" class="nav-btn">Previous</button>
-                        <button onclick="showNextCategory()" class="nav-btn">Next Category</button>
+                <div class="category-dropdown">
+                    <button class="category-header" onclick="toggleCategory('romantic')">
+                        <span>Romantic</span>
+                        <span class="dropdown-icon">▼</span>
+                    </button>
+                    <div class="category-content" data-category="romantic">
+                        <div class="relationship-grid">
+                            <button onclick="selectRelationship('new-dating', this)" class="relationship-btn">New Dating Couple</button>
+                            <button onclick="selectRelationship('long-term-partners', this)" class="relationship-btn">Long-term Partners</button>
+                            <button onclick="selectRelationship('engaged', this)" class="relationship-btn">Engaged Couple</button>
+                            <button onclick="selectRelationship('married', this)" class="relationship-btn">Married Couple</button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Friends -->
-                <div class="category-section" data-category="friends" style="display: none;">
-                    <h3 class="category-title">Friends</h3>
-                    <div class="relationship-grid">
-                        <button onclick="selectRelationship('best-friends-same', this)" class="relationship-btn">Best Friends (Same Gender)</button>
-                        <button onclick="selectRelationship('best-friends-different', this)" class="relationship-btn">Best Friends (Different Gender)</button>
-                        <button onclick="selectRelationship('new-friends', this)" class="relationship-btn">New Friends</button>
-                        <button onclick="selectRelationship('childhood-friends', this)" class="relationship-btn">Childhood Friends Reconnecting</button>
-                        <button onclick="selectRelationship('work-friends', this)" class="relationship-btn">Work Friends</button>
-                        <button onclick="selectRelationship('online-friends', this)" class="relationship-btn">Online Friends Meeting IRL</button>
-                    </div>
-                    <div class="category-nav">
-                        <button onclick="showPrevCategory()" class="nav-btn">Previous</button>
-                        <button onclick="showNextCategory()" class="nav-btn">Next Category</button>
+                <div class="category-dropdown">
+                    <button class="category-header" onclick="toggleCategory('friends')">
+                        <span>Friends</span>
+                        <span class="dropdown-icon">▼</span>
+                    </button>
+                    <div class="category-content" data-category="friends">
+                        <div class="relationship-grid">
+                            <button onclick="selectRelationship('best-friends-same', this)" class="relationship-btn">Best Friends (Same Gender)</button>
+                            <button onclick="selectRelationship('best-friends-different', this)" class="relationship-btn">Best Friends (Different Gender)</button>
+                            <button onclick="selectRelationship('new-friends', this)" class="relationship-btn">New Friends</button>
+                            <button onclick="selectRelationship('childhood-friends', this)" class="relationship-btn">Childhood Friends Reconnecting</button>
+                            <button onclick="selectRelationship('work-friends', this)" class="relationship-btn">Work Friends</button>
+                            <button onclick="selectRelationship('online-friends', this)" class="relationship-btn">Online Friends Meeting IRL</button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Other -->
-                <div class="category-section" data-category="other" style="display: none;">
-                    <h3 class="category-title">Other</h3>
-                    <div class="relationship-grid">
-                        <button onclick="selectRelationship('colleagues', this)" class="relationship-btn">Colleagues</button>
-                        <button onclick="selectRelationship('mentor-mentee', this)" class="relationship-btn">Mentor & Mentee</button>
-                        <button onclick="selectRelationship('roommates', this)" class="relationship-btn">Roommates</button>
-                        <button onclick="selectRelationship('neighbors', this)" class="relationship-btn">Neighbors</button>
-                    </div>
-                    <div class="category-nav">
-                        <button onclick="showPrevCategory()" class="nav-btn">Previous</button>
+                <div class="category-dropdown">
+                    <button class="category-header" onclick="toggleCategory('other')">
+                        <span>Other</span>
+                        <span class="dropdown-icon">▼</span>
+                    </button>
+                    <div class="category-content" data-category="other">
+                        <div class="relationship-grid">
+                            <button onclick="selectRelationship('colleagues', this)" class="relationship-btn">Colleagues</button>
+                            <button onclick="selectRelationship('mentor-mentee', this)" class="relationship-btn">Mentor & Mentee</button>
+                            <button onclick="selectRelationship('roommates', this)" class="relationship-btn">Roommates</button>
+                            <button onclick="selectRelationship('neighbors', this)" class="relationship-btn">Neighbors</button>
+                        </div>
                     </div>
                 </div>
             </div>

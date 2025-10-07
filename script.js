@@ -116,55 +116,42 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('Welcome screen should now be visible');
 });
 
-let currentCategoryIndex = 0;
-const categories = ['family', 'romantic', 'friends', 'other'];
-
 function showCreateGame() {
     console.log('showCreateGame() called');
-    
+
     try {
-        currentCategoryIndex = 0;
-        
         // Simply show the relationship screen directly
         showScreen('relationship-screen');
-        
-        // Show the first category
-        setTimeout(() => {
-            showCurrentCategory();
-        }, 100);
-        
+
     } catch (error) {
         console.error('Error in showCreateGame:', error);
     }
 }
 
-function showCurrentCategory() {
-    const allSections = document.querySelectorAll('.category-section');
-    allSections.forEach(section => {
-        section.style.display = 'none';
-        section.classList.remove('show');
+function toggleCategory(categoryName) {
+    const categoryContent = document.querySelector(`.category-content[data-category="${categoryName}"]`);
+
+    if (!categoryContent) {
+        console.error(`Category content not found for: ${categoryName}`);
+        return;
+    }
+
+    const categoryHeader = categoryContent.previousElementSibling;
+
+    // Close all other categories
+    document.querySelectorAll('.category-content').forEach(content => {
+        if (content !== categoryContent) {
+            content.classList.remove('open');
+            if (content.previousElementSibling) {
+                content.previousElementSibling.classList.remove('active');
+            }
+        }
     });
-    
-    const currentSection = document.querySelector(`[data-category="${categories[currentCategoryIndex]}"]`);
-    if (currentSection) {
-        currentSection.style.display = 'block';
-        setTimeout(() => {
-            currentSection.classList.add('show');
-        }, 100);
-    }
-}
 
-function showNextCategory() {
-    if (currentCategoryIndex < categories.length - 1) {
-        currentCategoryIndex++;
-        showCurrentCategory();
-    }
-}
-
-function showPrevCategory() {
-    if (currentCategoryIndex > 0) {
-        currentCategoryIndex--;
-        showCurrentCategory();
+    // Toggle the clicked category
+    categoryContent.classList.toggle('open');
+    if (categoryHeader) {
+        categoryHeader.classList.toggle('active');
     }
 }
 
@@ -695,23 +682,21 @@ function restartGame() {
     gameState = null;
     isPlayerReady = false;
     isUpdatingState = false;
-    
-    // Reset category navigation
-    currentCategoryIndex = 0;
-    
+
     // Clear input fields
     document.getElementById('player1-name').value = '';
     document.getElementById('player2-name').value = '';
     document.getElementById('your-name').value = '';
     document.getElementById('room-code-input').value = '';
-    
-    // Reset category sections
-    const allSections = document.querySelectorAll('.category-section');
-    allSections.forEach(section => {
-        section.style.display = 'none';
-        section.classList.remove('show');
+
+    // Reset category dropdowns
+    document.querySelectorAll('.category-content').forEach(content => {
+        content.classList.remove('open');
     });
-    
+    document.querySelectorAll('.category-header').forEach(header => {
+        header.classList.remove('active');
+    });
+
     // Reset lobby and complete content
     const lobbyInfo = document.getElementById('lobby-info');
     if (lobbyInfo) {

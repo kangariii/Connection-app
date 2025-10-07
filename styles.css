@@ -113,6 +113,66 @@ body {
     text-align: left;
     max-width: 800px;
     margin: 0 auto;
+    margin-top: 20px;
+}
+
+.category-dropdown {
+    margin-bottom: 15px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.category-dropdown:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.category-header {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    padding: 18px 25px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+    text-align: left;
+}
+
+.category-header:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.category-header.active {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.dropdown-icon {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.category-header.active .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+.category-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    padding: 0 20px;
+}
+
+.category-content.open {
+    max-height: 1000px;
+    padding: 20px;
 }
 
 .category-section {
@@ -862,6 +922,15 @@ body {
     .relationship-grid {
         grid-template-columns: 1fr;
         gap: 8px;
+    }
+
+    .category-header {
+        font-size: 1.1rem;
+        padding: 15px 20px;
+    }
+
+    .category-dropdown {
+        margin-bottom: 10px;
     }
     
     .categories-container {
