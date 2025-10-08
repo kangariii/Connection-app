@@ -1474,26 +1474,31 @@ function startCompatibilityTest() {
     // Show compatibility screen
     showScreen('compatibility-screen');
 
-    // Set up Firebase listener for online mode
-    if (isOnlineMode && isFirebaseConnected) {
-        setupCompatibilityListener();
-    }
-
-    // Start first question
+    // Start first question (which will set up the listener)
     displayCompatibilityQuestion();
 }
+
+let compatibilityQuestionListener = null;
 
 function setupCompatibilityListener() {
     if (!isOnlineMode || !isFirebaseConnected) return;
 
-    console.log('Setting up compatibility listener');
+    console.log('Setting up compatibility listener for question', compatibilityCurrentQuestion);
 
-    // Listen for compatibility answers from both players
-    database.ref(`rooms/${roomCode}/compatibility`).on('value', (snapshot) => {
+    // Remove old listener if exists
+    if (compatibilityQuestionListener) {
+        database.ref(`rooms/${roomCode}/compatibility/${compatibilityQuestionListener}`).off('value');
+    }
+
+    // Listen only to CURRENT question
+    const currentQ = compatibilityCurrentQuestion;
+    compatibilityQuestionListener = currentQ;
+
+    database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
-        console.log('Compatibility data updated:', data);
+        console.log(`Question ${currentQ} data updated:`, data);
 
         // Prevent race condition by checking if we're already processing
         if (isProcessingCompatibilityAnswer) {
@@ -1501,42 +1506,42 @@ function setupCompatibilityListener() {
             return;
         }
 
-        // Check current question
-        const currentQuestionData = data[compatibilityCurrentQuestion];
-        if (currentQuestionData) {
-            // Store the other player's answer if available
-            if (playerNumber === 1 && currentQuestionData.player2Answer) {
-                compatibilityPlayer2Answers[compatibilityCurrentQuestion] = currentQuestionData.player2Answer;
-                compatibilityPlayer2Ready = true;
-            } else if (playerNumber === 2 && currentQuestionData.player1Answer) {
-                compatibilityPlayer1Answers[compatibilityCurrentQuestion] = currentQuestionData.player1Answer;
-                compatibilityPlayer1Ready = true;
+        // Store the other player's answer if available
+        if (playerNumber === 1 && data.player2Answer) {
+            compatibilityPlayer2Answers[currentQ] = data.player2Answer;
+            compatibilityPlayer2Ready = true;
+        } else if (playerNumber === 2 && data.player1Answer) {
+            compatibilityPlayer1Answers[currentQ] = data.player1Answer;
+            compatibilityPlayer1Ready = true;
+        }
+
+        // If both players have answered this question, show comparison
+        if (data.player1Answer && data.player2Answer) {
+            console.log('Both players answered question', currentQ);
+
+            // Mark as processing to prevent race condition
+            isProcessingCompatibilityAnswer = true;
+
+            // Store answers if not already stored
+            if (!compatibilityPlayer1Answers[currentQ]) {
+                compatibilityPlayer1Answers[currentQ] = data.player1Answer;
+            }
+            if (!compatibilityPlayer2Answers[currentQ]) {
+                compatibilityPlayer2Answers[currentQ] = data.player2Answer;
             }
 
-            // If both players have answered this question, show comparison
-            if (currentQuestionData.player1Answer && currentQuestionData.player2Answer) {
-                console.log('Both players answered question', compatibilityCurrentQuestion);
+            // Reset ready flags
+            compatibilityPlayer1Ready = false;
+            compatibilityPlayer2Ready = false;
 
-                // Mark as processing to prevent race condition
-                isProcessingCompatibilityAnswer = true;
+            // Remove listener for this question
+            database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).off('value');
+            compatibilityQuestionListener = null;
 
-                // Store answers if not already stored
-                if (!compatibilityPlayer1Answers[compatibilityCurrentQuestion]) {
-                    compatibilityPlayer1Answers[compatibilityCurrentQuestion] = currentQuestionData.player1Answer;
-                }
-                if (!compatibilityPlayer2Answers[compatibilityCurrentQuestion]) {
-                    compatibilityPlayer2Answers[compatibilityCurrentQuestion] = currentQuestionData.player2Answer;
-                }
-
-                // Reset ready flags
-                compatibilityPlayer1Ready = false;
-                compatibilityPlayer2Ready = false;
-
-                // Show comparison screen after brief delay
-                setTimeout(() => {
-                    showCompatibilityComparison(compatibilityCurrentQuestion);
-                }, 1000);
-            }
+            // Show comparison screen after brief delay
+            setTimeout(() => {
+                showCompatibilityComparison(currentQ);
+            }, 1000);
         }
     });
 }
@@ -1587,6 +1592,11 @@ function displayCompatibilityQuestion() {
 
     // Add drag and drop event listeners
     setupRankingDragAndDrop();
+
+    // Set up listener for this question (online mode only)
+    if (isOnlineMode && isFirebaseConnected) {
+        setupCompatibilityListener();
+    }
 
     // Show question display, hide waiting
     document.getElementById('compatibility-question-display').classList.remove('hidden');
