@@ -438,13 +438,22 @@ function showRoundAnnouncement(roundNumber, roundConfig, callback) {
 }
 
 function showCategorySelection() {
+    console.log(`showCategorySelection called - Round ${currentRound}`);
     const categorySelection = document.getElementById('category-selection');
+
+    if (!categorySelection) {
+        console.error('ERROR: category-selection element not found!');
+        return;
+    }
+
     categorySelection.classList.remove('hidden');
     categorySelection.style.display = 'block';
-    
+    console.log('Category selection display set to block, hidden class removed');
+
     // Trigger animation
     setTimeout(() => {
         categorySelection.classList.add('show');
+        console.log('Category selection show class added - should be visible now');
     }, 100);
 }
 
@@ -457,9 +466,16 @@ function updateTurnDisplay() {
 }
 
 function displayCategories(categories) {
+    console.log(`displayCategories called with: [${categories.join(', ')}] for Round ${currentRound}`);
     const container = document.getElementById('categories-container');
+
+    if (!container) {
+        console.error('ERROR: categories-container element not found!');
+        return;
+    }
+
     container.innerHTML = '';
-    
+
     categories.forEach(category => {
         const btn = document.createElement('button');
         btn.className = 'category-btn';
@@ -467,6 +483,8 @@ function displayCategories(categories) {
         btn.onclick = () => selectCategory(category);
         container.appendChild(btn);
     });
+
+    console.log(`Created ${categories.length} category buttons`);
 }
 
 function selectCategory(category) {
@@ -653,7 +671,10 @@ function completeRound() {
 
 function nextRound() {
     console.log(`nextRound called: currentRound=${currentRound}, isOnlineMode=${isOnlineMode}`);
-    
+
+    // Hide round complete UI first
+    document.getElementById('round-complete').classList.add('hidden');
+
     if (currentRound >= 5) {
         // Game is complete
         completeGame();
@@ -662,7 +683,11 @@ function nextRound() {
         currentRound++;
         roundTurns = 0;
         currentPlayer = 1; // Always start new round with player 1
-        
+        currentQuestion = ''; // Reset current question for new round
+
+        console.log(`=== STARTING ROUND ${currentRound} ===`);
+        console.log(`Reset: roundTurns=0, currentPlayer=1, currentQuestion=''`);
+
         if (isOnlineMode) {
             // Update game state and sync
             gameState.currentRound = currentRound;
@@ -1228,13 +1253,20 @@ function updateGameDisplay() {
 
 function nextTurn() {
     console.log(`nextTurn called: isOnlineMode=${isOnlineMode}, roundTurns before increment: ${roundTurns}`);
-    
+
+    // Validate that a question was actually displayed
+    if (!currentQuestion || currentQuestion.trim() === '') {
+        console.error('ERROR: nextTurn called without a question being displayed!');
+        alert('Please select a category and answer a question before continuing.');
+        return;
+    }
+
     // Prevent concurrent updates in online mode
     if (isOnlineMode && isUpdatingState) {
         console.log('nextTurn: State update in progress, ignoring call');
         return;
     }
-    
+
     isUpdatingState = true;
     
     // First increment roundTurns to track completed turns
@@ -1258,7 +1290,8 @@ function nextTurn() {
     } else {
         // Switch to other player
         currentPlayer = currentPlayer === 1 ? 2 : 1;
-        console.log(`Switched to player ${currentPlayer}`);
+        currentQuestion = ''; // Reset for next player's turn
+        console.log(`Switched to player ${currentPlayer}, reset currentQuestion`);
         
         if (isOnlineMode) {
             // In online mode, update state and sync
