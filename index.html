@@ -120,6 +120,46 @@
         </div>
     </div>
 
+    <!-- Game Mode Selection Screen -->
+    <div id="mode-selection-screen" class="screen">
+        <div class="container">
+            <button onclick="showScreen('relationship-screen')" class="back-btn">← Back</button>
+            <h2 class="screen-title">Choose Your Game Mode</h2>
+            <p class="screen-subtitle">How would you like to connect today?</p>
+
+            <div class="game-modes-grid">
+                <div class="game-mode-card" onclick="selectGameMode('connection')">
+                    <div class="mode-icon">💭</div>
+                    <h3>Deepen Your Connection</h3>
+                    <p class="mode-description">Journey through 5 rounds of meaningful questions that progressively deepen your bond</p>
+                    <div class="mode-details">
+                        <span class="mode-time">⏱ 20-30 min</span>
+                        <span class="mode-type">Classic Mode</span>
+                    </div>
+                </div>
+
+                <div class="game-mode-card" onclick="selectGameMode('compatibility')">
+                    <div class="mode-icon">🧩</div>
+                    <h3>Compatibility Test</h3>
+                    <p class="mode-description">Discover your compatibility score through 10 science-backed questions about values, communication, and vision</p>
+                    <div class="mode-details">
+                        <span class="mode-time">⏱ 10-15 min</span>
+                        <span class="mode-type">Assessment</span>
+                    </div>
+                </div>
+
+                <div class="game-mode-card" onclick="selectGameMode('knowledge')">
+                    <div class="mode-icon">🎯</div>
+                    <h3>How Well Do You Know Each Other?</h3>
+                    <p class="mode-description">Compete to predict each other's answers! Test your knowledge and discover surprising things</p>
+                    <div class="mode-details">
+                        <span class="mode-time">⏱ 15-20 min</span>
+                        <span class="mode-type">Quiz Game</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Join Game Screen -->
     <div id="join-screen" class="screen">
@@ -251,6 +291,183 @@
         </div>
     </div>
 
+    <!-- Compatibility Test Screen -->
+    <div id="compatibility-screen" class="screen">
+        <div class="container">
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div id="compatibility-progress-fill" class="progress-fill"></div>
+                </div>
+                <p class="progress-text">Question <span id="compatibility-question-num">1</span> of 10</p>
+            </div>
+
+            <!-- Question Display -->
+            <div id="compatibility-question-display" class="compatibility-question-display">
+                <div class="card">
+                    <h3 id="compatibility-question-text">Question will appear here</h3>
+                    <div id="compatibility-answers" class="compatibility-answers">
+                        <!-- Answer buttons will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Waiting for Partner -->
+            <div id="compatibility-waiting" class="waiting-state hidden">
+                <div class="waiting-card">
+                    <h3>Waiting for your partner...</h3>
+                    <p>They're answering the question</p>
+                    <div class="waiting-animation">
+                        <div class="pulse-dot"></div>
+                        <div class="pulse-dot"></div>
+                        <div class="pulse-dot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compatibility Results Screen -->
+    <div id="compatibility-results-screen" class="screen">
+        <div class="container">
+            <div id="compatibility-results-content" style="display: none;">
+                <h2 class="complete-title">Compatibility Results</h2>
+
+                <div class="compatibility-score-display">
+                    <div class="score-circle">
+                        <span id="compatibility-score-number">0</span>
+                        <span class="score-percent">%</span>
+                    </div>
+                    <h3 id="compatibility-rating">Great Match!</h3>
+                    <p id="compatibility-message">You share strong alignment in key areas</p>
+                </div>
+
+                <div class="compatibility-breakdown">
+                    <h3>Compatibility Breakdown</h3>
+                    <div id="compatibility-categories"></div>
+                </div>
+
+                <div class="compatibility-insights">
+                    <h3>Insights & Growth Areas</h3>
+                    <div id="compatibility-insights-content"></div>
+                </div>
+
+                <div class="complete-actions">
+                    <button onclick="shareCompatibilityResults()" class="secondary-btn">Share Results</button>
+                    <button onclick="restartGame()" class="main-btn">Start New Journey</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Knowledge Quiz Screen -->
+    <div id="knowledge-screen" class="screen">
+        <div class="container">
+            <!-- Score Display -->
+            <div class="knowledge-score-bar">
+                <div class="player-score">
+                    <span id="knowledge-player1-name">Player 1</span>: <span id="knowledge-player1-score">0</span>
+                </div>
+                <div class="player-score">
+                    <span id="knowledge-player2-name">Player 2</span>: <span id="knowledge-player2-score">0</span>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-container">
+                <p class="progress-text">Question <span id="knowledge-question-num">1</span> of 15</p>
+            </div>
+
+            <!-- Answer Phase -->
+            <div id="knowledge-answer-phase" class="knowledge-phase hidden">
+                <div class="card">
+                    <div class="phase-indicator">📝 Answer</div>
+                    <h3 id="knowledge-question-text">Question will appear here</h3>
+                    <p class="knowledge-instruction"><span id="knowledge-answerer-name">Player 1</span>, choose your answer:</p>
+                    <div id="knowledge-answer-options" class="knowledge-options">
+                        <!-- Options will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prediction Phase -->
+            <div id="knowledge-predict-phase" class="knowledge-phase hidden">
+                <div class="card">
+                    <div class="phase-indicator">🔮 Predict</div>
+                    <h3 id="knowledge-predict-question">Question will appear here</h3>
+                    <p class="knowledge-instruction"><span id="knowledge-predictor-name">Player 2</span>, what do you think they answered?</p>
+                    <div id="knowledge-predict-options" class="knowledge-options">
+                        <!-- Options will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Phase -->
+            <div id="knowledge-result-phase" class="knowledge-phase hidden">
+                <div class="card knowledge-result-card">
+                    <div id="knowledge-result-icon" class="result-icon">✓</div>
+                    <h3 id="knowledge-result-title">Correct!</h3>
+                    <p id="knowledge-result-message">You know each other well!</p>
+                    <div class="answer-reveal">
+                        <p>The answer was: <strong id="knowledge-correct-answer">Answer</strong></p>
+                    </div>
+                    <button onclick="nextKnowledgeQuestion()" class="main-btn">Continue</button>
+                </div>
+            </div>
+
+            <!-- Waiting State -->
+            <div id="knowledge-waiting" class="waiting-state hidden">
+                <div class="waiting-card">
+                    <h3>Waiting for your partner...</h3>
+                    <div class="waiting-animation">
+                        <div class="pulse-dot"></div>
+                        <div class="pulse-dot"></div>
+                        <div class="pulse-dot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Knowledge Quiz Results Screen -->
+    <div id="knowledge-results-screen" class="screen">
+        <div class="container">
+            <div id="knowledge-results-content" style="display: none;">
+                <h2 class="complete-title">Quiz Complete!</h2>
+
+                <div class="knowledge-final-scores">
+                    <div class="final-score-card">
+                        <h3 id="knowledge-final-player1-name">Player 1</h3>
+                        <div class="final-score-number">
+                            <span id="knowledge-final-player1-score">0</span>
+                            <span class="score-total">/15</span>
+                        </div>
+                        <p class="score-percentage"><span id="knowledge-final-player1-percent">0</span>% accuracy</p>
+                    </div>
+                    <div class="vs-divider">VS</div>
+                    <div class="final-score-card">
+                        <h3 id="knowledge-final-player2-name">Player 2</h3>
+                        <div class="final-score-number">
+                            <span id="knowledge-final-player2-score">0</span>
+                            <span class="score-total">/15</span>
+                        </div>
+                        <p class="score-percentage"><span id="knowledge-final-player2-percent">0</span>% accuracy</p>
+                    </div>
+                </div>
+
+                <div class="knowledge-winner">
+                    <h3 id="knowledge-winner-text">It's a tie!</h3>
+                    <p id="knowledge-winner-message">You both know each other equally well!</p>
+                </div>
+
+                <div class="complete-actions">
+                    <button onclick="shareKnowledgeResults()" class="secondary-btn">Share Results</button>
+                    <button onclick="restartGame()" class="main-btn">Play Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Round Announcement Overlay -->
     <div id="round-announcement" class="round-announcement">
         <div class="round-announcement-content">
@@ -285,6 +502,8 @@
     <!-- Scripts -->
     <script src="config.js"></script>
     <script src="questions.js"></script>
+    <script src="compatibility-questions.js"></script>
+    <script src="knowledge-questions.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 // Game State Variables
+let currentGameMode = ''; // 'connection', 'compatibility', 'knowledge'
 let currentRelationshipType = '';
 let player1Name = '';
 let player2Name = '';
@@ -8,6 +9,22 @@ let roundTurns = 0; // tracks turns within current round (max 2 per round)
 let gameData = null;
 let savedQuestions = []; // Track saved questions
 let currentQuestion = ''; // Track current question for saving
+
+// Compatibility Test State
+let compatibilityCurrentQuestion = 0;
+let compatibilityPlayer1Answers = [];
+let compatibilityPlayer2Answers = [];
+let compatibilityPlayer1Ready = false;
+let compatibilityPlayer2Ready = false;
+
+// Knowledge Quiz State
+let knowledgeQuestionsList = [];
+let knowledgeCurrentQuestion = 0;
+let knowledgePlayer1Score = 0;
+let knowledgePlayer2Score = 0;
+let knowledgeCurrentAnswer = '';
+let knowledgeCurrentPrediction = '';
+let knowledgeAnswerer = 1; // Which player is answering (alternates)
 
 // Multiplayer State Variables
 let isOnlineMode = false;
@@ -178,16 +195,24 @@ function showJoinGame() {
 function selectRelationship(relationshipType, buttonElement) {
     currentRelationshipType = relationshipType;
     console.log('Selected relationship:', relationshipType);
-    
+
     // Visual feedback for selection
     const relationshipBtns = document.querySelectorAll('.relationship-btn');
     relationshipBtns.forEach(btn => btn.classList.remove('selected'));
     buttonElement.classList.add('selected');
-    
-    // Brief delay then create game room
+
+    // Brief delay then show mode selection
     setTimeout(() => {
-        createGameRoom();
+        showScreen('mode-selection-screen');
     }, 500);
+}
+
+function selectGameMode(mode) {
+    currentGameMode = mode;
+    console.log('Selected game mode:', mode);
+
+    // Create game room with the selected mode
+    createGameRoom();
 }
 
 function startGame() {
@@ -779,6 +804,7 @@ function restartGame() {
     }
     
     // Reset all game state
+    currentGameMode = '';
     currentRelationshipType = '';
     player1Name = '';
     player2Name = '';
@@ -786,7 +812,23 @@ function restartGame() {
     currentPlayer = 1;
     roundTurns = 0;
     gameData = null;
-    
+
+    // Reset compatibility state
+    compatibilityCurrentQuestion = 0;
+    compatibilityPlayer1Answers = [];
+    compatibilityPlayer2Answers = [];
+    compatibilityPlayer1Ready = false;
+    compatibilityPlayer2Ready = false;
+
+    // Reset knowledge quiz state
+    knowledgeQuestionsList = [];
+    knowledgeCurrentQuestion = 0;
+    knowledgePlayer1Score = 0;
+    knowledgePlayer2Score = 0;
+    knowledgeCurrentAnswer = '';
+    knowledgeCurrentPrediction = '';
+    knowledgeAnswerer = 1;
+
     // Reset multiplayer state
     isOnlineMode = false;
     roomCode = '';
@@ -1116,6 +1158,7 @@ async function startOnlineGame() {
             if (readyPlayers.length >= 2) {
                 // Both players are ready, initialize game state
                 gameState = {
+                    gameMode: currentGameMode,
                     relationshipType: currentRelationshipType,
                     currentRound: 1,
                     currentPlayer: 1,
@@ -1133,14 +1176,14 @@ async function startOnlineGame() {
                 if (playerNumber === 1) {
                     try {
                         await syncGameState();
-                        console.log('Game state synced, starting round for host');
+                        console.log('Game state synced, starting game for host');
                         // Only the host starts the game locally, others will receive via gameState
-                        startRound(1);
+                        startGameByMode();
                     } catch (error) {
                         console.error('Failed to sync game state, starting offline:', error);
                         // Fall back to offline mode
                         isOnlineMode = false;
-                        startRound(1);
+                        startGameByMode();
                     }
                 } else {
                     // Player 2 waits for game state update from Firebase
@@ -1176,23 +1219,29 @@ async function syncGameState() {
 
 function receiveGameState(newGameState) {
     console.log(`receiveGameState called. Current round: ${currentRound}, New round: ${newGameState.currentRound}, roundTurns: ${newGameState.roundTurns}`);
-    
+
     const oldRound = currentRound;
     gameState = newGameState;
-    
+
     // Update local game variables from Firebase state
+    currentGameMode = gameState.gameMode || 'connection';
     currentRelationshipType = gameState.relationshipType;
     currentRound = gameState.currentRound;
     currentPlayer = gameState.currentPlayer;
     roundTurns = gameState.roundTurns;
-    console.log(`receiveGameState updated local state - Round: ${currentRound}, Player: ${currentPlayer}, Turns: ${roundTurns}`);
+    console.log(`receiveGameState updated local state - Mode: ${currentGameMode}, Round: ${currentRound}, Player: ${currentPlayer}, Turns: ${roundTurns}`);
     player1Name = gameState.player1Name;
     player2Name = gameState.player2Name;
     
     // Start the game if it hasn't started yet and we're not already in a game
-    if (gameState.gameStarted && !document.getElementById('game-screen').classList.contains('active')) {
-        startRound(currentRound);
-    } else if (gameState.gameStarted) {
+    const isInGame = document.getElementById('game-screen').classList.contains('active') ||
+                     document.getElementById('compatibility-screen').classList.contains('active') ||
+                     document.getElementById('knowledge-screen').classList.contains('active');
+
+    if (gameState.gameStarted && !isInGame) {
+        startGameByMode();
+    } else if (gameState.gameStarted && currentGameMode === 'connection') {
+        // Connection mode specific updates
         // Check if this is a new round (round number changed)
         if (oldRound !== currentRound && currentRound > oldRound) {
             console.log(`receiveGameState: New round detected (${oldRound} -> ${currentRound}), starting round`);
@@ -1370,5 +1419,542 @@ function nextTurn() {
     }
 }
 
+// ========================================
+// GAME MODE ROUTING
+// ========================================
 
+function startGameByMode() {
+    console.log(`Starting game in mode: ${currentGameMode}`);
 
+    if (currentGameMode === 'connection') {
+        startRound(1);
+    } else if (currentGameMode === 'compatibility') {
+        startCompatibilityTest();
+    } else if (currentGameMode === 'knowledge') {
+        startKnowledgeQuiz();
+    } else {
+        console.error('Unknown game mode:', currentGameMode);
+        startRound(1); // Default to connection mode
+    }
+}
+
+// ========================================
+// COMPATIBILITY TEST MODE
+// ========================================
+
+function startCompatibilityTest() {
+    console.log('Starting Compatibility Test');
+
+    // Reset compatibility state
+    compatibilityCurrentQuestion = 0;
+    compatibilityPlayer1Answers = [];
+    compatibilityPlayer2Answers = [];
+    compatibilityPlayer1Ready = false;
+    compatibilityPlayer2Ready = false;
+
+    // Show compatibility screen
+    showScreen('compatibility-screen');
+
+    // Start first question
+    displayCompatibilityQuestion();
+}
+
+function displayCompatibilityQuestion() {
+    const questionIndex = compatibilityCurrentQuestion;
+
+    if (questionIndex >= compatibilityQuestions.length) {
+        // All questions answered
+        checkCompatibilityComplete();
+        return;
+    }
+
+    const question = compatibilityQuestions[questionIndex];
+
+    // Update progress
+    const progressFill = document.getElementById('compatibility-progress-fill');
+    const questionNum = document.getElementById('compatibility-question-num');
+    const percentage = ((questionIndex + 1) / compatibilityQuestions.length) * 100;
+    progressFill.style.width = percentage + '%';
+    questionNum.textContent = questionIndex + 1;
+
+    // Display question
+    document.getElementById('compatibility-question-text').textContent = question.question;
+
+    // Display answer options
+    const answersContainer = document.getElementById('compatibility-answers');
+    answersContainer.innerHTML = '';
+
+    question.options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.className = 'compatibility-answer-btn';
+        btn.textContent = option.text;
+        btn.onclick = function() { selectCompatibilityAnswer(option.value, this); };
+        answersContainer.appendChild(btn);
+    });
+
+    // Show question display, hide waiting
+    document.getElementById('compatibility-question-display').classList.remove('hidden');
+    document.getElementById('compatibility-waiting').classList.add('hidden');
+
+    console.log(`Displaying compatibility question ${questionIndex + 1}/${compatibilityQuestions.length}`);
+}
+
+function selectCompatibilityAnswer(answerValue, buttonElement) {
+    console.log(`Compatibility answer selected: ${answerValue}`);
+
+    // Store answer
+    if (playerNumber === 1 || !isOnlineMode) {
+        compatibilityPlayer1Answers[compatibilityCurrentQuestion] = answerValue;
+        compatibilityPlayer1Ready = true;
+    } else {
+        compatibilityPlayer2Answers[compatibilityCurrentQuestion] = answerValue;
+        compatibilityPlayer2Ready = true;
+    }
+
+    // Visual feedback
+    const buttons = document.querySelectorAll('.compatibility-answer-btn');
+    buttons.forEach(btn => btn.classList.remove('selected'));
+    if (buttonElement) buttonElement.classList.add('selected');
+
+    // Wait a moment then proceed
+    setTimeout(() => {
+        if (isOnlineMode) {
+            // Sync answer to Firebase
+            syncCompatibilityAnswer(answerValue).then(() => {
+                // Show waiting state
+                document.getElementById('compatibility-question-display').classList.add('hidden');
+                document.getElementById('compatibility-waiting').classList.remove('hidden');
+            });
+        } else {
+            // Offline mode - both players answer on same device
+            if (!compatibilityPlayer2Answers[compatibilityCurrentQuestion]) {
+                // Ask player 2
+                alert(`${player2Name}, it's your turn to answer this question!`);
+                displayCompatibilityQuestion(); // Redisplay for player 2
+            } else {
+                // Both answered, move to next
+                compatibilityCurrentQuestion++;
+                compatibilityPlayer1Ready = false;
+                compatibilityPlayer2Ready = false;
+                displayCompatibilityQuestion();
+            }
+        }
+    }, 800);
+}
+
+async function syncCompatibilityAnswer(answer) {
+    if (!isOnlineMode || !isFirebaseConnected) {
+        return Promise.resolve();
+    }
+
+    try {
+        const answerKey = playerNumber === 1 ? 'player1Answer' : 'player2Answer';
+        await database.ref(`rooms/${roomCode}/compatibility/${compatibilityCurrentQuestion}`).update({
+            [answerKey]: answer,
+            [`${answerKey}Timestamp`]: Date.now()
+        });
+        console.log('Compatibility answer synced');
+    } catch (error) {
+        console.error('Failed to sync compatibility answer:', error);
+    }
+}
+
+function checkCompatibilityComplete() {
+    if (isOnlineMode) {
+        // In online mode, check if both players have all answers
+        if (compatibilityPlayer1Answers.length === compatibilityQuestions.length &&
+            compatibilityPlayer2Answers.length === compatibilityQuestions.length) {
+            showCompatibilityResults();
+        }
+    } else {
+        // Offline mode
+        showCompatibilityResults();
+    }
+}
+
+function showCompatibilityResults() {
+    console.log('Showing compatibility results');
+
+    // Calculate compatibility score
+    const results = calculateCompatibilityScore(compatibilityPlayer1Answers, compatibilityPlayer2Answers);
+
+    // Show results screen
+    showScreen('compatibility-results-screen');
+
+    // Animate score display
+    setTimeout(() => {
+        document.getElementById('compatibility-results-content').style.display = 'block';
+
+        setTimeout(() => {
+            // Animate score number
+            animateNumber('compatibility-score-number', 0, results.score, 2000);
+
+            // Set rating and message
+            document.getElementById('compatibility-rating').textContent = results.insights.rating;
+            document.getElementById('compatibility-message').textContent = results.insights.message;
+
+            // Display breakdown
+            displayCompatibilityBreakdown(results.breakdown);
+
+            // Display insights
+            displayCompatibilityInsights(results.insights);
+
+            document.getElementById('compatibility-results-content').classList.add('show');
+        }, 500);
+    }, 1000);
+}
+
+function animateNumber(elementId, start, end, duration) {
+    const element = document.getElementById(elementId);
+    const range = end - start;
+    const increment = range / (duration / 16);
+    let current = start;
+
+    const timer = setInterval(() => {
+        current += increment;
+        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+            current = end;
+            clearInterval(timer);
+        }
+        element.textContent = Math.round(current);
+    }, 16);
+}
+
+function displayCompatibilityBreakdown(breakdown) {
+    const container = document.getElementById('compatibility-categories');
+    container.innerHTML = '';
+
+    breakdown.forEach(item => {
+        const scoreDiv = document.createElement('div');
+        scoreDiv.className = 'category-score';
+
+        const percentage = (item.points / item.maxPoints) * 100;
+
+        scoreDiv.innerHTML = `
+            <span class="category-score-name">${item.category}</span>
+            <div class="category-score-bar">
+                <div class="category-score-fill" style="width: ${percentage}%"></div>
+            </div>
+            <span class="category-score-points">${item.points}/${item.maxPoints}</span>
+        `;
+
+        container.appendChild(scoreDiv);
+    });
+}
+
+function displayCompatibilityInsights(insights) {
+    const container = document.getElementById('compatibility-insights-content');
+    container.innerHTML = '';
+
+    // Strengths
+    const strengthsDiv = document.createElement('div');
+    strengthsDiv.className = 'insight-item';
+    strengthsDiv.innerHTML = `
+        <div class="insight-label">Strengths</div>
+        <div class="insight-text">${insights.strengths}</div>
+    `;
+    container.appendChild(strengthsDiv);
+
+    // Growth Areas
+    const growthDiv = document.createElement('div');
+    growthDiv.className = 'insight-item';
+    growthDiv.innerHTML = `
+        <div class="insight-label">Growth Areas</div>
+        <div class="insight-text">${insights.growth}</div>
+    `;
+    container.appendChild(growthDiv);
+}
+
+function shareCompatibilityResults() {
+    const score = document.getElementById('compatibility-score-number').textContent;
+    const rating = document.getElementById('compatibility-rating').textContent;
+
+    const shareText = `We scored ${score}% compatibility - ${rating}! 💑 Discover your compatibility with Who Are You!`;
+
+    if (navigator.share) {
+        navigator.share({
+            title: 'Our Compatibility Results',
+            text: shareText,
+            url: window.location.href
+        }).catch(err => console.log('Share cancelled', err));
+    } else {
+        navigator.clipboard.writeText(shareText + '\n' + window.location.href).then(() => {
+            alert('Results copied to clipboard!');
+        });
+    }
+}
+
+// ========================================
+// KNOWLEDGE QUIZ MODE
+// ========================================
+
+function startKnowledgeQuiz() {
+    console.log('Starting Knowledge Quiz');
+
+    // Reset knowledge state
+    knowledgeCurrentQuestion = 0;
+    knowledgePlayer1Score = 0;
+    knowledgePlayer2Score = 0;
+    knowledgeCurrentAnswer = '';
+    knowledgeCurrentPrediction = '';
+    knowledgeAnswerer = 1; // Player 1 starts
+
+    // Get random 15 questions
+    knowledgeQuestionsList = getRandomKnowledgeQuestions(15);
+
+    // Show knowledge screen
+    showScreen('knowledge-screen');
+
+    // Set player names in score bar
+    document.getElementById('knowledge-player1-name').textContent = player1Name;
+    document.getElementById('knowledge-player2-name').textContent = player2Name;
+    document.getElementById('knowledge-player1-score').textContent = '0';
+    document.getElementById('knowledge-player2-score').textContent = '0';
+
+    // Start first question
+    startKnowledgeQuestion();
+}
+
+function startKnowledgeQuestion() {
+    if (knowledgeCurrentQuestion >= knowledgeQuestionsList.length) {
+        // Quiz complete
+        showKnowledgeResults();
+        return;
+    }
+
+    const question = knowledgeQuestionsList[knowledgeCurrentQuestion];
+
+    // Update progress
+    document.getElementById('knowledge-question-num').textContent = knowledgeCurrentQuestion + 1;
+
+    // Hide all phases
+    document.getElementById('knowledge-answer-phase').classList.add('hidden');
+    document.getElementById('knowledge-predict-phase').classList.add('hidden');
+    document.getElementById('knowledge-result-phase').classList.add('hidden');
+    document.getElementById('knowledge-waiting').classList.add('hidden');
+
+    // Reset state
+    knowledgeCurrentAnswer = '';
+    knowledgeCurrentPrediction = '';
+
+    // Show answer phase
+    showKnowledgeAnswerPhase(question);
+}
+
+function showKnowledgeAnswerPhase(question) {
+    const answererName = knowledgeAnswerer === 1 ? player1Name : player2Name;
+
+    document.getElementById('knowledge-question-text').textContent = question.question;
+    document.getElementById('knowledge-answerer-name').textContent = answererName;
+
+    // Display options
+    const optionsContainer = document.getElementById('knowledge-answer-options');
+    optionsContainer.innerHTML = '';
+
+    question.options.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'knowledge-option-btn';
+        btn.textContent = option;
+        btn.onclick = () => selectKnowledgeAnswer(option, index);
+        optionsContainer.appendChild(btn);
+    });
+
+    document.getElementById('knowledge-answer-phase').classList.remove('hidden');
+
+    console.log(`${answererName} answering question ${knowledgeCurrentQuestion + 1}`);
+}
+
+function selectKnowledgeAnswer(answer, index) {
+    knowledgeCurrentAnswer = answer;
+
+    // Visual feedback
+    const buttons = document.querySelectorAll('#knowledge-answer-options .knowledge-option-btn');
+    buttons.forEach(btn => btn.classList.remove('selected'));
+    buttons[index].classList.add('selected');
+
+    setTimeout(() => {
+        if (isOnlineMode) {
+            // Sync answer and show waiting
+            syncKnowledgeAnswer(answer).then(() => {
+                document.getElementById('knowledge-answer-phase').classList.add('hidden');
+                document.getElementById('knowledge-waiting').classList.remove('hidden');
+            });
+        } else {
+            // Offline - move to prediction phase
+            showKnowledgePredictPhase();
+        }
+    }, 800);
+}
+
+async function syncKnowledgeAnswer(answer) {
+    if (!isOnlineMode || !isFirebaseConnected) {
+        return Promise.resolve();
+    }
+
+    try {
+        await database.ref(`rooms/${roomCode}/knowledge/${knowledgeCurrentQuestion}`).update({
+            answer: answer,
+            answerer: knowledgeAnswerer,
+            timestamp: Date.now()
+        });
+        console.log('Knowledge answer synced');
+    } catch (error) {
+        console.error('Failed to sync knowledge answer:', error);
+    }
+}
+
+function showKnowledgePredictPhase() {
+    const question = knowledgeQuestionsList[knowledgeCurrentQuestion];
+    const predictorNumber = knowledgeAnswerer === 1 ? 2 : 1;
+    const predictorName = predictorNumber === 1 ? player1Name : player2Name;
+    const answererName = knowledgeAnswerer === 1 ? player1Name : player2Name;
+
+    // In offline mode, alert to switch players
+    if (!isOnlineMode) {
+        alert(`${predictorName}, ${answererName} has answered. Now predict what they chose!`);
+    }
+
+    document.getElementById('knowledge-predict-question').textContent = question.question;
+    document.getElementById('knowledge-predictor-name').textContent = predictorName;
+
+    // Display options (same as answer phase)
+    const optionsContainer = document.getElementById('knowledge-predict-options');
+    optionsContainer.innerHTML = '';
+
+    question.options.forEach((option) => {
+        const btn = document.createElement('button');
+        btn.className = 'knowledge-option-btn';
+        btn.textContent = option;
+        btn.onclick = function() { selectKnowledgePrediction(option, predictorNumber, this); };
+        optionsContainer.appendChild(btn);
+    });
+
+    document.getElementById('knowledge-answer-phase').classList.add('hidden');
+    document.getElementById('knowledge-waiting').classList.add('hidden');
+    document.getElementById('knowledge-predict-phase').classList.remove('hidden');
+
+    console.log(`${predictorName} predicting answer`);
+}
+
+function selectKnowledgePrediction(prediction, predictorNumber, buttonElement) {
+    knowledgeCurrentPrediction = prediction;
+
+    // Visual feedback
+    const buttons = document.querySelectorAll('#knowledge-predict-options .knowledge-option-btn');
+    buttons.forEach(btn => btn.classList.remove('selected'));
+    if (buttonElement) buttonElement.classList.add('selected');
+
+    setTimeout(() => {
+        // Check if prediction is correct
+        const isCorrect = prediction === knowledgeCurrentAnswer;
+
+        // Update score
+        if (isCorrect) {
+            if (predictorNumber === 1) {
+                knowledgePlayer1Score++;
+            } else {
+                knowledgePlayer2Score++;
+            }
+        }
+
+        // Show result
+        showKnowledgeResult(isCorrect);
+    }, 800);
+}
+
+function showKnowledgeResult(isCorrect) {
+    const predictorNumber = knowledgeAnswerer === 1 ? 2 : 1;
+    const predictorName = predictorNumber === 1 ? player1Name : player2Name;
+
+    // Update UI
+    document.getElementById('knowledge-result-icon').textContent = isCorrect ? '✓' : '✗';
+    document.getElementById('knowledge-result-icon').className = isCorrect ? 'result-icon correct' : 'result-icon incorrect';
+    document.getElementById('knowledge-result-title').textContent = isCorrect ? 'Correct!' : 'Not quite!';
+    document.getElementById('knowledge-result-message').textContent = isCorrect ?
+        `${predictorName} knows you well!` :
+        `${predictorName} was surprised by your answer!`;
+    document.getElementById('knowledge-correct-answer').textContent = knowledgeCurrentAnswer;
+
+    // Update scores
+    document.getElementById('knowledge-player1-score').textContent = knowledgePlayer1Score;
+    document.getElementById('knowledge-player2-score').textContent = knowledgePlayer2Score;
+
+    // Show result phase
+    document.getElementById('knowledge-predict-phase').classList.add('hidden');
+    document.getElementById('knowledge-result-phase').classList.remove('hidden');
+
+    console.log(`Result: ${isCorrect ? 'Correct' : 'Incorrect'}. Scores - P1: ${knowledgePlayer1Score}, P2: ${knowledgePlayer2Score}`);
+}
+
+function nextKnowledgeQuestion() {
+    // Alternate answerer
+    knowledgeAnswerer = knowledgeAnswerer === 1 ? 2 : 1;
+
+    // Move to next question
+    knowledgeCurrentQuestion++;
+
+    // Start next question
+    startKnowledgeQuestion();
+}
+
+function showKnowledgeResults() {
+    console.log('Showing knowledge quiz results');
+
+    showScreen('knowledge-results-screen');
+
+    setTimeout(() => {
+        document.getElementById('knowledge-results-content').style.display = 'block';
+
+        // Set final scores
+        document.getElementById('knowledge-final-player1-name').textContent = player1Name;
+        document.getElementById('knowledge-final-player2-name').textContent = player2Name;
+        document.getElementById('knowledge-final-player1-score').textContent = knowledgePlayer1Score;
+        document.getElementById('knowledge-final-player2-score').textContent = knowledgePlayer2Score;
+
+        // Calculate percentages
+        const totalQuestions = knowledgeQuestionsList.length;
+        const p1Percent = Math.round((knowledgePlayer1Score / totalQuestions) * 100);
+        const p2Percent = Math.round((knowledgePlayer2Score / totalQuestions) * 100);
+
+        document.getElementById('knowledge-final-player1-percent').textContent = p1Percent;
+        document.getElementById('knowledge-final-player2-percent').textContent = p2Percent;
+
+        // Determine winner
+        let winnerText, winnerMessage;
+        if (knowledgePlayer1Score > knowledgePlayer2Score) {
+            winnerText = `${player1Name} wins!`;
+            winnerMessage = `${player1Name} knows ${player2Name} better!`;
+        } else if (knowledgePlayer2Score > knowledgePlayer1Score) {
+            winnerText = `${player2Name} wins!`;
+            winnerMessage = `${player2Name} knows ${player1Name} better!`;
+        } else {
+            winnerText = "It's a tie!";
+            winnerMessage = "You both know each other equally well!";
+        }
+
+        document.getElementById('knowledge-winner-text').textContent = winnerText;
+        document.getElementById('knowledge-winner-message').textContent = winnerMessage;
+
+        document.getElementById('knowledge-results-content').classList.add('show');
+    }, 1000);
+}
+
+function shareKnowledgeResults() {
+    const p1Score = document.getElementById('knowledge-final-player1-score').textContent;
+    const p2Score = document.getElementById('knowledge-final-player2-score').textContent;
+    const winner = document.getElementById('knowledge-winner-text').textContent;
+
+    const shareText = `${winner} 🎯 Final scores: ${player1Name} ${p1Score} - ${player2Name} ${p2Score}. Test how well you know each other with Who Are You!`;
+
+    if (navigator.share) {
+        navigator.share({
+            title: 'Knowledge Quiz Results',
+            text: shareText,
+            url: window.location.href
+        }).catch(err => console.log('Share cancelled', err));
+    } else {
+        navigator.clipboard.writeText(shareText + '\n' + window.location.href).then(() => {
+            alert('Results copied to clipboard!');
+        });
+    }
+}
