@@ -1854,6 +1854,67 @@ function displayPlayerRanking(containerId, playerRanking, otherPlayerRanking, op
 function continueToNextQuestion() {
     console.log('Continue to next question');
 
+    if (isOnlineMode && isFirebaseConnected) {
+        // Online mode - need to sync with other player
+        const currentQ = compatibilityCurrentQuestion;
+        const readyKey = playerNumber === 1 ? 'player1Ready' : 'player2Ready';
+
+        // Mark this player as ready to continue
+        database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).update({
+            [readyKey + 'ToContinue']: true
+        }).then(() => {
+            console.log('Marked as ready to continue');
+
+            // Check if both players are ready
+            database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.player1ReadyToContinue && data.player2ReadyToContinue) {
+                    // Both ready, advance
+                    advanceToNextQuestion();
+                } else {
+                    // Wait for other player
+                    console.log('Waiting for other player to click continue...');
+                    showWaitingForContinue();
+
+                    // Listen for other player's ready status
+                    const continueListener = database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (data && data.player1ReadyToContinue && data.player2ReadyToContinue) {
+                            // Both ready now, advance
+                            database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).off('value', continueListener);
+                            advanceToNextQuestion();
+                        }
+                    });
+                }
+            });
+        });
+    } else {
+        // Offline mode - just advance directly
+        advanceToNextQuestion();
+    }
+}
+
+function showWaitingForContinue() {
+    // Hide comparison screen content, show waiting message
+    const comparisonContainer = document.querySelector('.comparison-container');
+    if (comparisonContainer) {
+        comparisonContainer.innerHTML = `
+            <div class="waiting-card" style="margin-top: 50px;">
+                <h3>Waiting for your partner...</h3>
+                <p>They're reviewing the comparison</p>
+                <div class="waiting-animation">
+                    <div class="pulse-dot"></div>
+                    <div class="pulse-dot"></div>
+                    <div class="pulse-dot"></div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function advanceToNextQuestion() {
+    console.log('Advancing to next question');
+
     // Reset processing flag
     isProcessingCompatibilityAnswer = false;
 
