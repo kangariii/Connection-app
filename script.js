@@ -1852,44 +1852,57 @@ function displayPlayerRanking(containerId, playerRanking, otherPlayerRanking, op
 }
 
 function continueToNextQuestion() {
-    console.log('Continue to next question');
+    console.log('=== CONTINUE BUTTON CLICKED ===');
+    console.log('Current question:', compatibilityCurrentQuestion);
+    console.log('Is online mode:', isOnlineMode);
+    console.log('Is Firebase connected:', isFirebaseConnected);
 
     if (isOnlineMode && isFirebaseConnected) {
         // Online mode - need to sync with other player
         const currentQ = compatibilityCurrentQuestion;
         const readyKey = playerNumber === 1 ? 'player1Ready' : 'player2Ready';
 
+        console.log('Attempting to mark player as ready...');
+
         // Mark this player as ready to continue
         database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).update({
             [readyKey + 'ToContinue']: true
         }).then(() => {
-            console.log('Marked as ready to continue');
+            console.log('✓ Successfully marked as ready to continue');
 
             // Check if both players are ready
             database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).once('value', (snapshot) => {
                 const data = snapshot.val();
+                console.log('Checking if both players ready:', data);
+
                 if (data && data.player1ReadyToContinue && data.player2ReadyToContinue) {
                     // Both ready, advance
+                    console.log('✓ Both players ready! Advancing...');
                     advanceToNextQuestion();
                 } else {
                     // Wait for other player
-                    console.log('Waiting for other player to click continue...');
+                    console.log('⏳ Waiting for other player to click continue...');
                     showWaitingForContinue();
 
                     // Listen for other player's ready status
                     const continueListener = database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).on('value', (snapshot) => {
                         const data = snapshot.val();
+                        console.log('Continue listener fired:', data);
                         if (data && data.player1ReadyToContinue && data.player2ReadyToContinue) {
                             // Both ready now, advance
+                            console.log('✓ Other player ready! Advancing...');
                             database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).off('value', continueListener);
                             advanceToNextQuestion();
                         }
                     });
                 }
             });
+        }).catch(error => {
+            console.error('❌ Error marking as ready:', error);
         });
     } else {
         // Offline mode - just advance directly
+        console.log('Offline mode - advancing directly');
         advanceToNextQuestion();
     }
 }
