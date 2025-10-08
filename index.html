@@ -307,9 +307,11 @@
             <div id="compatibility-question-display" class="compatibility-question-display">
                 <div class="card">
                     <h3 id="compatibility-question-text">Question will appear here</h3>
-                    <div id="compatibility-answers" class="compatibility-answers">
-                        <!-- Answer buttons will be populated by JavaScript -->
+                    <p class="ranking-instruction">Drag to reorder from most important (top) to least important (bottom)</p>
+                    <div id="compatibility-answers" class="compatibility-ranking-list">
+                        <!-- Ranking items will be populated by JavaScript -->
                     </div>
+                    <button id="submit-ranking-btn" class="main-btn" onclick="submitRanking()" style="margin-top: 20px;">Submit Ranking</button>
                 </div>
             </div>
 
@@ -503,7 +505,7 @@
     <!-- Scripts -->
     <script src="config.js"></script>
     <script src="questions.js"></script>
-    <script src="compatibility-questions.js"></script>
+    <script src="compatibility-questions-ranking.js"></script>
     <script src="knowledge-questions.js"></script>
     <script src="script.js"></script>
 </body>

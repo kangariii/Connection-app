@@ -583,8 +583,10 @@ body {
     right: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(231, 60, 126, 0.08) 0%, rgba(35, 166, 213, 0.05) 70%);
     animation: cardGlow 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
 }
 
 @keyframes cardGlow {
@@ -1475,37 +1477,75 @@ body {
     animation: fadeIn 0.5s ease;
 }
 
-.compatibility-answers {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px;
-    margin-top: 25px;
+.ranking-instruction {
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    margin: 15px 0;
+    font-size: 0.9rem;
+    font-style: italic;
 }
 
-.compatibility-answer-btn {
-    background: rgba(255, 255, 255, 0.9);
+.compatibility-ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 25px;
+    position: relative;
+    z-index: 1;
+}
+
+.ranking-item {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 15px;
-    padding: 20px;
+    padding: 18px 20px;
     font-size: 1rem;
-    color: #333;
-    cursor: pointer;
+    color: white;
+    cursor: move;
     transition: all 0.3s ease;
-    text-align: left;
     font-family: 'Poppins', sans-serif;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    z-index: 10;
 }
 
-.compatibility-answer-btn:hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: #e73c7e;
+.ranking-item .rank-number {
+    background: rgba(231, 60, 126, 0.8);
+    color: white;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.ranking-item .rank-text {
+    flex: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ranking-item:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
     transform: translateX(5px);
 }
 
-.compatibility-answer-btn.selected {
-    background: linear-gradient(135deg, #e73c7e, #23a6d5);
-    color: white;
-    border-color: transparent;
+.ranking-item.dragging {
+    opacity: 0.5;
+    transform: scale(1.05);
+}
+
+.ranking-item.drag-over {
+    border-color: #e73c7e;
+    background: rgba(231, 60, 126, 0.2);
 }
 
 /* Compatibility Results */

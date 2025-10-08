@@ -1498,17 +1498,31 @@ function displayCompatibilityQuestion() {
     // Display question
     document.getElementById('compatibility-question-text').textContent = question.question;
 
-    // Display answer options
+    // Display ranking options
     const answersContainer = document.getElementById('compatibility-answers');
     answersContainer.innerHTML = '';
 
-    question.options.forEach(option => {
-        const btn = document.createElement('button');
-        btn.className = 'compatibility-answer-btn';
-        btn.textContent = option.text;
-        btn.onclick = function() { selectCompatibilityAnswer(option.value, this); };
-        answersContainer.appendChild(btn);
+    question.options.forEach((option, index) => {
+        const rankingItem = document.createElement('div');
+        rankingItem.className = 'ranking-item';
+        rankingItem.draggable = true;
+        rankingItem.dataset.optionId = option.id;
+
+        const rankNumber = document.createElement('span');
+        rankNumber.className = 'rank-number';
+        rankNumber.textContent = index + 1;
+
+        const optionText = document.createElement('span');
+        optionText.className = 'ranking-text';
+        optionText.textContent = option.text;
+
+        rankingItem.appendChild(rankNumber);
+        rankingItem.appendChild(optionText);
+        answersContainer.appendChild(rankingItem);
     });
+
+    // Add drag and drop event listeners
+    setupRankingDragAndDrop();
 
     // Show question display, hide waiting
     document.getElementById('compatibility-question-display').classList.remove('hidden');
@@ -1517,47 +1531,132 @@ function displayCompatibilityQuestion() {
     console.log(`Displaying compatibility question ${questionIndex + 1}/${compatibilityQuestions.length}`);
 }
 
-function selectCompatibilityAnswer(answerValue, buttonElement) {
-    console.log(`Compatibility answer selected: ${answerValue}`);
+// Drag and drop functionality for ranking system
+let draggedItem = null;
 
-    // Store answer
+function setupRankingDragAndDrop() {
+    const rankingItems = document.querySelectorAll('.ranking-item');
+
+    rankingItems.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragend', handleDragEnd);
+        item.addEventListener('dragenter', handleDragEnter);
+        item.addEventListener('dragleave', handleDragLeave);
+    });
+}
+
+function handleDragStart(e) {
+    draggedItem = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) {
+    if (this !== draggedItem) {
+        this.classList.add('drag-over');
+    }
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+
+    if (draggedItem !== this) {
+        const container = this.parentNode;
+        const allItems = Array.from(container.children);
+        const draggedIndex = allItems.indexOf(draggedItem);
+        const targetIndex = allItems.indexOf(this);
+
+        if (draggedIndex < targetIndex) {
+            this.parentNode.insertBefore(draggedItem, this.nextSibling);
+        } else {
+            this.parentNode.insertBefore(draggedItem, this);
+        }
+
+        // Update rank numbers
+        updateRankNumbers();
+    }
+
+    return false;
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    const items = document.querySelectorAll('.ranking-item');
+    items.forEach(item => {
+        item.classList.remove('drag-over');
+    });
+}
+
+function updateRankNumbers() {
+    const rankingItems = document.querySelectorAll('.ranking-item');
+    rankingItems.forEach((item, index) => {
+        const rankNumber = item.querySelector('.rank-number');
+        rankNumber.textContent = index + 1;
+    });
+}
+
+// Submit ranking function
+function submitRanking() {
+    console.log('Submit ranking called');
+
+    // Get the current ranking order
+    const rankingItems = document.querySelectorAll('.ranking-item');
+    const ranking = {};
+
+    rankingItems.forEach((item, index) => {
+        const optionId = item.dataset.optionId;
+        ranking[optionId] = index + 1; // Rank starts at 1
+    });
+
+    console.log('Ranking submitted:', ranking);
+
+    // Store ranking
     if (playerNumber === 1 || !isOnlineMode) {
-        compatibilityPlayer1Answers[compatibilityCurrentQuestion] = answerValue;
+        compatibilityPlayer1Answers[compatibilityCurrentQuestion] = ranking;
         compatibilityPlayer1Ready = true;
     } else {
-        compatibilityPlayer2Answers[compatibilityCurrentQuestion] = answerValue;
+        compatibilityPlayer2Answers[compatibilityCurrentQuestion] = ranking;
         compatibilityPlayer2Ready = true;
     }
 
-    // Visual feedback
-    const buttons = document.querySelectorAll('.compatibility-answer-btn');
-    buttons.forEach(btn => btn.classList.remove('selected'));
-    if (buttonElement) buttonElement.classList.add('selected');
-
-    // Wait a moment then proceed
-    setTimeout(() => {
-        if (isOnlineMode) {
-            // Sync answer to Firebase
-            syncCompatibilityAnswer(answerValue).then(() => {
-                // Show waiting state
-                document.getElementById('compatibility-question-display').classList.add('hidden');
-                document.getElementById('compatibility-waiting').classList.remove('hidden');
-            });
+    // Proceed to next question or waiting
+    if (isOnlineMode) {
+        // Sync answer to Firebase
+        syncCompatibilityAnswer(ranking).then(() => {
+            // Show waiting state
+            document.getElementById('compatibility-question-display').classList.add('hidden');
+            document.getElementById('compatibility-waiting').classList.remove('hidden');
+        });
+    } else {
+        // Offline mode - both players answer on same device
+        if (!compatibilityPlayer2Answers[compatibilityCurrentQuestion]) {
+            // Ask player 2
+            alert(`${player2Name}, it's your turn to rank these options!`);
+            displayCompatibilityQuestion(); // Redisplay for player 2
         } else {
-            // Offline mode - both players answer on same device
-            if (!compatibilityPlayer2Answers[compatibilityCurrentQuestion]) {
-                // Ask player 2
-                alert(`${player2Name}, it's your turn to answer this question!`);
-                displayCompatibilityQuestion(); // Redisplay for player 2
-            } else {
-                // Both answered, move to next
-                compatibilityCurrentQuestion++;
-                compatibilityPlayer1Ready = false;
-                compatibilityPlayer2Ready = false;
-                displayCompatibilityQuestion();
-            }
+            // Both answered, move to next
+            compatibilityCurrentQuestion++;
+            compatibilityPlayer1Ready = false;
+            compatibilityPlayer2Ready = false;
+            displayCompatibilityQuestion();
         }
-    }, 800);
+    }
 }
 
 async function syncCompatibilityAnswer(answer) {
