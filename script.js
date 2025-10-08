@@ -145,8 +145,8 @@ function showCreateGame() {
     console.log('showCreateGame() called');
 
     try {
-        // Simply show the relationship screen directly
-        showScreen('relationship-screen');
+        // Show mode selection screen first
+        showScreen('mode-selection-screen');
 
     } catch (error) {
         console.error('Error in showCreateGame:', error);
@@ -201,9 +201,9 @@ function selectRelationship(relationshipType, buttonElement) {
     relationshipBtns.forEach(btn => btn.classList.remove('selected'));
     buttonElement.classList.add('selected');
 
-    // Brief delay then show mode selection
+    // Brief delay then create game room
     setTimeout(() => {
-        showScreen('mode-selection-screen');
+        createGameRoom();
     }, 500);
 }
 
@@ -211,8 +211,8 @@ function selectGameMode(mode) {
     currentGameMode = mode;
     console.log('Selected game mode:', mode);
 
-    // Create game room with the selected mode
-    createGameRoom();
+    // Show relationship selection screen
+    showScreen('relationship-screen');
 }
 
 function startGame() {
