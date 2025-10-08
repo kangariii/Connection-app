@@ -330,6 +330,46 @@
         </div>
     </div>
 
+    <!-- Compatibility Comparison Screen -->
+    <div id="compatibility-comparison-screen" class="screen">
+        <div class="container">
+            <div class="comparison-container">
+                <h2 class="comparison-title">How You Compared</h2>
+                <p class="comparison-subtitle" id="comparison-question-text">Question text will appear here</p>
+
+                <!-- Match Score Badge -->
+                <div class="comparison-match-badge">
+                    <div class="match-percentage" id="comparison-match-percentage">0%</div>
+                    <p class="match-label">Match on this question</p>
+                </div>
+
+                <!-- Rankings Comparison -->
+                <div class="rankings-comparison">
+                    <!-- Player 1 Rankings -->
+                    <div class="player-rankings">
+                        <h3 class="player-rankings-title" id="comparison-player1-name">Player 1</h3>
+                        <div class="ranking-list" id="comparison-player1-rankings">
+                            <!-- Rankings will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Player 2 Rankings -->
+                    <div class="player-rankings">
+                        <h3 class="player-rankings-title" id="comparison-player2-name">Player 2</h3>
+                        <div class="ranking-list" id="comparison-player2-rankings">
+                            <!-- Rankings will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Continue Button -->
+                <button onclick="continueToNextQuestion()" class="main-btn continue-btn">
+                    Continue to Next Question
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Compatibility Results Screen -->
     <div id="compatibility-results-screen" class="screen">
         <div class="container">

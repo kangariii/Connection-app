@@ -16,6 +16,7 @@ let compatibilityPlayer1Answers = [];
 let compatibilityPlayer2Answers = [];
 let compatibilityPlayer1Ready = false;
 let compatibilityPlayer2Ready = false;
+let isProcessingCompatibilityAnswer = false;
 
 // Knowledge Quiz State
 let knowledgeQuestionsList = [];
@@ -1494,6 +1495,12 @@ function setupCompatibilityListener() {
 
         console.log('Compatibility data updated:', data);
 
+        // Prevent race condition by checking if we're already processing
+        if (isProcessingCompatibilityAnswer) {
+            console.log('Already processing answer, skipping...');
+            return;
+        }
+
         // Check current question
         const currentQuestionData = data[compatibilityCurrentQuestion];
         if (currentQuestionData) {
@@ -1506,9 +1513,12 @@ function setupCompatibilityListener() {
                 compatibilityPlayer1Ready = true;
             }
 
-            // If both players have answered this question, move to next
+            // If both players have answered this question, show comparison
             if (currentQuestionData.player1Answer && currentQuestionData.player2Answer) {
                 console.log('Both players answered question', compatibilityCurrentQuestion);
+
+                // Mark as processing to prevent race condition
+                isProcessingCompatibilityAnswer = true;
 
                 // Store answers if not already stored
                 if (!compatibilityPlayer1Answers[compatibilityCurrentQuestion]) {
@@ -1522,17 +1532,9 @@ function setupCompatibilityListener() {
                 compatibilityPlayer1Ready = false;
                 compatibilityPlayer2Ready = false;
 
-                // Move to next question after a brief delay
+                // Show comparison screen after brief delay
                 setTimeout(() => {
-                    compatibilityCurrentQuestion++;
-
-                    if (compatibilityCurrentQuestion >= compatibilityQuestions.length) {
-                        // All questions answered
-                        showCompatibilityResults();
-                    } else {
-                        // Show next question
-                        displayCompatibilityQuestion();
-                    }
+                    showCompatibilityComparison(compatibilityCurrentQuestion);
                 }, 1000);
             }
         }
@@ -1712,11 +1714,10 @@ function submitRanking() {
             alert(`${player2Name}, it's your turn to rank these options!`);
             displayCompatibilityQuestion(); // Redisplay for player 2
         } else {
-            // Both answered, move to next
-            compatibilityCurrentQuestion++;
-            compatibilityPlayer1Ready = false;
-            compatibilityPlayer2Ready = false;
-            displayCompatibilityQuestion();
+            // Both answered, show comparison
+            setTimeout(() => {
+                showCompatibilityComparison(compatibilityCurrentQuestion);
+            }, 500);
         }
     }
 }
@@ -1735,6 +1736,136 @@ async function syncCompatibilityAnswer(answer) {
         console.log('Compatibility answer synced');
     } catch (error) {
         console.error('Failed to sync compatibility answer:', error);
+    }
+}
+
+function showCompatibilityComparison(questionIndex) {
+    console.log('Showing comparison for question', questionIndex);
+
+    const question = compatibilityQuestions[questionIndex];
+    const player1Ranking = compatibilityPlayer1Answers[questionIndex];
+    const player2Ranking = compatibilityPlayer2Answers[questionIndex];
+
+    // Update question text
+    document.getElementById('comparison-question-text').textContent = question.question;
+
+    // Update player names
+    document.getElementById('comparison-player1-name').textContent = player1Name;
+    document.getElementById('comparison-player2-name').textContent = player2Name;
+
+    // Calculate match percentage for this question
+    const matchPercentage = calculateQuestionMatch(player1Ranking, player2Ranking, question.options);
+    document.getElementById('comparison-match-percentage').textContent = matchPercentage + '%';
+
+    // Display rankings for both players
+    displayPlayerRanking('comparison-player1-rankings', player1Ranking, player2Ranking, question.options);
+    displayPlayerRanking('comparison-player2-rankings', player2Ranking, player1Ranking, question.options);
+
+    // Update button text for last question
+    const continueBtn = document.querySelector('.continue-btn');
+    if (questionIndex === compatibilityQuestions.length - 1) {
+        continueBtn.textContent = 'See Final Results';
+    } else {
+        continueBtn.textContent = 'Continue to Next Question';
+    }
+
+    // Show comparison screen
+    showScreen('compatibility-comparison-screen');
+}
+
+function calculateQuestionMatch(ranking1, ranking2, options) {
+    let totalPoints = 0;
+    let maxPoints = 0;
+
+    options.forEach(option => {
+        const optionId = option.id;
+        const rank1 = ranking1[optionId];
+        const rank2 = ranking2[optionId];
+
+        const difference = Math.abs(rank1 - rank2);
+        const points = 3 - difference;
+
+        totalPoints += points;
+        maxPoints += 3;
+    });
+
+    return Math.round((totalPoints / maxPoints) * 100);
+}
+
+function displayPlayerRanking(containerId, playerRanking, otherPlayerRanking, options) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    // Create array of options with their ranks
+    const rankedOptions = options.map(option => ({
+        id: option.id,
+        text: option.text,
+        rank: playerRanking[option.id]
+    }));
+
+    // Sort by rank
+    rankedOptions.sort((a, b) => a.rank - b.rank);
+
+    // Display each ranked option
+    rankedOptions.forEach(option => {
+        const item = document.createElement('div');
+        item.className = 'comparison-ranking-item';
+
+        // Check if ranks match
+        const otherRank = otherPlayerRanking[option.id];
+        const difference = Math.abs(option.rank - otherRank);
+
+        if (difference === 0) {
+            item.classList.add('exact-match');
+        } else if (difference === 1) {
+            item.classList.add('close-match');
+        }
+
+        // Rank number
+        const rankNumber = document.createElement('span');
+        rankNumber.className = 'comparison-rank-number';
+        rankNumber.textContent = option.rank;
+
+        // Option text
+        const optionText = document.createElement('span');
+        optionText.className = 'comparison-ranking-text';
+        optionText.textContent = option.text;
+
+        // Match indicator
+        const indicator = document.createElement('span');
+        indicator.className = 'match-indicator';
+        if (difference === 0) {
+            indicator.textContent = '✓';
+            indicator.style.color = '#4CD964';
+        } else if (difference === 1) {
+            indicator.textContent = '~';
+            indicator.style.color = '#FFCC00';
+        } else {
+            indicator.textContent = '';
+        }
+
+        item.appendChild(rankNumber);
+        item.appendChild(optionText);
+        item.appendChild(indicator);
+        container.appendChild(item);
+    });
+}
+
+function continueToNextQuestion() {
+    console.log('Continue to next question');
+
+    // Reset processing flag
+    isProcessingCompatibilityAnswer = false;
+
+    // Move to next question
+    compatibilityCurrentQuestion++;
+
+    if (compatibilityCurrentQuestion >= compatibilityQuestions.length) {
+        // All questions answered, show results
+        showCompatibilityResults();
+    } else {
+        // Show next question
+        displayCompatibilityQuestion();
     }
 }
 
