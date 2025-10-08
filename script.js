@@ -318,15 +318,20 @@ function showSequentialMessages(messages, finalCallback) {
         if (finalCallback) finalCallback();
         return;
     }
-    
+
     let currentIndex = 0;
-    
+
     function showNextMessage() {
         if (currentIndex >= messages.length) {
+            // All messages shown - restore progress bar before callback
+            const progressContainer = document.querySelector('.progress-container');
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+            }
             if (finalCallback) finalCallback();
             return;
         }
-        
+
         const message = messages[currentIndex];
         showMessage(message.text, message.type, message.duration, () => {
             currentIndex++;
@@ -334,7 +339,7 @@ function showSequentialMessages(messages, finalCallback) {
             setTimeout(showNextMessage, 300);
         });
     }
-    
+
     showNextMessage();
 }
 
@@ -343,11 +348,17 @@ function showMessage(text, type = 'title', duration = 2000, callback) {
     const title = document.getElementById('announcement-title');
     const subtitle = document.getElementById('announcement-subtitle');
     const content = announcement?.querySelector('.round-announcement-content');
-    
+    const progressContainer = document.querySelector('.progress-container');
+
     if (!announcement || !title || !subtitle) {
         console.error('Missing announcement elements:', { announcement: !!announcement, title: !!title, subtitle: !!subtitle });
         if (callback) callback();
         return;
+    }
+
+    // Hide progress bar during announcements
+    if (progressContainer) {
+        progressContainer.style.display = 'none';
     }
     
     // Complete reset of announcement state
