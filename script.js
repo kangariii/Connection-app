@@ -1473,8 +1473,70 @@ function startCompatibilityTest() {
     // Show compatibility screen
     showScreen('compatibility-screen');
 
+    // Set up Firebase listener for online mode
+    if (isOnlineMode && isFirebaseConnected) {
+        setupCompatibilityListener();
+    }
+
     // Start first question
     displayCompatibilityQuestion();
+}
+
+function setupCompatibilityListener() {
+    if (!isOnlineMode || !isFirebaseConnected) return;
+
+    console.log('Setting up compatibility listener');
+
+    // Listen for compatibility answers from both players
+    database.ref(`rooms/${roomCode}/compatibility`).on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        console.log('Compatibility data updated:', data);
+
+        // Check current question
+        const currentQuestionData = data[compatibilityCurrentQuestion];
+        if (currentQuestionData) {
+            // Store the other player's answer if available
+            if (playerNumber === 1 && currentQuestionData.player2Answer) {
+                compatibilityPlayer2Answers[compatibilityCurrentQuestion] = currentQuestionData.player2Answer;
+                compatibilityPlayer2Ready = true;
+            } else if (playerNumber === 2 && currentQuestionData.player1Answer) {
+                compatibilityPlayer1Answers[compatibilityCurrentQuestion] = currentQuestionData.player1Answer;
+                compatibilityPlayer1Ready = true;
+            }
+
+            // If both players have answered this question, move to next
+            if (currentQuestionData.player1Answer && currentQuestionData.player2Answer) {
+                console.log('Both players answered question', compatibilityCurrentQuestion);
+
+                // Store answers if not already stored
+                if (!compatibilityPlayer1Answers[compatibilityCurrentQuestion]) {
+                    compatibilityPlayer1Answers[compatibilityCurrentQuestion] = currentQuestionData.player1Answer;
+                }
+                if (!compatibilityPlayer2Answers[compatibilityCurrentQuestion]) {
+                    compatibilityPlayer2Answers[compatibilityCurrentQuestion] = currentQuestionData.player2Answer;
+                }
+
+                // Reset ready flags
+                compatibilityPlayer1Ready = false;
+                compatibilityPlayer2Ready = false;
+
+                // Move to next question after a brief delay
+                setTimeout(() => {
+                    compatibilityCurrentQuestion++;
+
+                    if (compatibilityCurrentQuestion >= compatibilityQuestions.length) {
+                        // All questions answered
+                        showCompatibilityResults();
+                    } else {
+                        // Show next question
+                        displayCompatibilityQuestion();
+                    }
+                }, 1000);
+            }
+        }
+    });
 }
 
 function displayCompatibilityQuestion() {
