@@ -44,12 +44,13 @@ async function initializeFirebase() {
 }
 
 // Firebase Database helper functions
-function createRoom(roomCode, hostPlayerId, relationshipType) {
+function createRoom(roomCode, hostPlayerId, relationshipType, gameMode = 'connection') {
     if (!isFirebaseConnected) return Promise.resolve();
-    
+
     return database.ref(`rooms/${roomCode}`).set({
         hostPlayerId: hostPlayerId,
         relationshipType: relationshipType,
+        gameMode: gameMode,
         players: {
             [hostPlayerId]: {
                 playerNumber: 1,

@@ -21,6 +21,48 @@
         <div class="container welcome-container">
             <h1 class="title">Who Are You?</h1>
             <p class="subtitle">Deepen your connection through meaningful questions</p>
+            <p class="subtitle" style="font-size: 1.1rem; margin-top: 20px; color: rgba(255,255,255,0.9);">Choose your game mode to begin</p>
+
+            <div class="game-modes-grid" style="margin-top: 40px;">
+                <div class="game-mode-card" onclick="selectGameMode('connection')">
+                    <div class="mode-icon">💭</div>
+                    <h3>Deepen Your Connection</h3>
+                    <p class="mode-description">Journey through 5 rounds of meaningful questions that progressively deepen your bond</p>
+                    <div class="mode-details">
+                        <span class="mode-time">⏱ 20-30 min</span>
+                        <span class="mode-type">Classic Mode</span>
+                    </div>
+                </div>
+
+                <div class="game-mode-card" onclick="selectGameMode('compatibility')">
+                    <div class="mode-icon">🧩</div>
+                    <h3>Compatibility Test</h3>
+                    <p class="mode-description">Discover your compatibility score through 10 science-backed questions about values, communication, and vision</p>
+                    <div class="mode-details">
+                        <span class="mode-time">⏱ 10-15 min</span>
+                        <span class="mode-type">Assessment</span>
+                    </div>
+                </div>
+
+                <div class="game-mode-card" onclick="selectGameMode('knowledge')">
+                    <div class="mode-icon">🎯</div>
+                    <h3>How Well Do You Know Each Other?</h3>
+                    <p class="mode-description">Compete to predict each other's answers! Test your knowledge and discover surprising things</p>
+                    <div class="mode-details">
+                        <span class="mode-time">⏱ 15-20 min</span>
+                        <span class="mode-type">Quiz Game</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Join Selection Screen -->
+    <div id="create-join-screen" class="screen">
+        <div class="container welcome-container">
+            <button onclick="showScreen('welcome-screen')" class="back-btn">← Back</button>
+            <h1 class="title">Who Are You?</h1>
+            <p class="subtitle">Ready to play <span id="selected-mode-name">your game</span>?</p>
             <div class="mode-buttons">
                 <button onclick="showCreateGame()" class="mode-btn">
                     <h3>Create Game</h3>
@@ -37,7 +79,7 @@
     <!-- Relationship Selection Screen -->
     <div id="relationship-screen" class="screen">
         <div class="container">
-            <button onclick="showScreen('mode-selection-screen')" class="back-btn">← Back</button>
+            <button onclick="showScreen('create-join-screen')" class="back-btn">← Back</button>
             <h2 class="screen-title">Choose Your Relationship</h2>
             <p class="screen-subtitle">Select the relationship type that best describes you</p>
             <div id="relationship-categories" class="relationship-categories">
@@ -120,51 +162,10 @@
         </div>
     </div>
 
-    <!-- Game Mode Selection Screen -->
-    <div id="mode-selection-screen" class="screen">
-        <div class="container">
-            <button onclick="showScreen('welcome-screen')" class="back-btn">← Back</button>
-            <h2 class="screen-title">Choose Your Game Mode</h2>
-            <p class="screen-subtitle">How would you like to connect today?</p>
-
-            <div class="game-modes-grid">
-                <div class="game-mode-card" onclick="selectGameMode('connection')">
-                    <div class="mode-icon">💭</div>
-                    <h3>Deepen Your Connection</h3>
-                    <p class="mode-description">Journey through 5 rounds of meaningful questions that progressively deepen your bond</p>
-                    <div class="mode-details">
-                        <span class="mode-time">⏱ 20-30 min</span>
-                        <span class="mode-type">Classic Mode</span>
-                    </div>
-                </div>
-
-                <div class="game-mode-card" onclick="selectGameMode('compatibility')">
-                    <div class="mode-icon">🧩</div>
-                    <h3>Compatibility Test</h3>
-                    <p class="mode-description">Discover your compatibility score through 10 science-backed questions about values, communication, and vision</p>
-                    <div class="mode-details">
-                        <span class="mode-time">⏱ 10-15 min</span>
-                        <span class="mode-type">Assessment</span>
-                    </div>
-                </div>
-
-                <div class="game-mode-card" onclick="selectGameMode('knowledge')">
-                    <div class="mode-icon">🎯</div>
-                    <h3>How Well Do You Know Each Other?</h3>
-                    <p class="mode-description">Compete to predict each other's answers! Test your knowledge and discover surprising things</p>
-                    <div class="mode-details">
-                        <span class="mode-time">⏱ 15-20 min</span>
-                        <span class="mode-type">Quiz Game</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Join Game Screen -->
     <div id="join-screen" class="screen">
         <div class="container">
-            <button onclick="showScreen('welcome-screen')" class="back-btn">← Back</button>
+            <button onclick="showScreen('create-join-screen')" class="back-btn">← Back</button>
             <h2 class="screen-title">Join Game</h2>
             <p class="screen-subtitle">Enter the game code shared by the host</p>
             

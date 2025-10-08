@@ -145,8 +145,8 @@ function showCreateGame() {
     console.log('showCreateGame() called');
 
     try {
-        // Show mode selection screen first
-        showScreen('mode-selection-screen');
+        // Show relationship selection screen
+        showScreen('relationship-screen');
 
     } catch (error) {
         console.error('Error in showCreateGame:', error);
@@ -211,8 +211,20 @@ function selectGameMode(mode) {
     currentGameMode = mode;
     console.log('Selected game mode:', mode);
 
-    // Show relationship selection screen
-    showScreen('relationship-screen');
+    // Update the selected mode name display
+    const modeNames = {
+        'connection': 'Deepen Your Connection',
+        'compatibility': 'Compatibility Test',
+        'knowledge': 'How Well Do You Know Each Other?'
+    };
+
+    const modeNameElement = document.getElementById('selected-mode-name');
+    if (modeNameElement) {
+        modeNameElement.textContent = modeNames[mode] || 'your game';
+    }
+
+    // Show create/join selection screen
+    showScreen('create-join-screen');
 }
 
 function startGame() {
@@ -960,7 +972,7 @@ async function createGameRoom() {
         showScreen('lobby-screen');
         showLobbyContent();
         
-        createRoom(roomCode, playerId, currentRelationshipType)
+        createRoom(roomCode, playerId, currentRelationshipType, currentGameMode)
             .then(() => {
                 isOnlineMode = true;
                 setupRoomListeners();
@@ -1073,10 +1085,16 @@ function setupRoomListeners() {
 function handleRoomUpdate(roomData) {
     const players = roomData.players || {};
     const playerList = Object.values(players).filter(p => p.connected);
-    
+
     // Set relationship type from room data if not already set (for joining players)
     if (roomData.relationshipType && !currentRelationshipType) {
         currentRelationshipType = roomData.relationshipType;
+    }
+
+    // Set game mode from room data if not already set (for joining players)
+    if (roomData.gameMode && !currentGameMode) {
+        currentGameMode = roomData.gameMode;
+        console.log(`Received game mode from room: ${currentGameMode}`);
     }
     
     // Update players display (removed for cleaner UI)
