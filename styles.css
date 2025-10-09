@@ -1511,6 +1511,11 @@ body {
     gap: 15px;
     position: relative;
     z-index: 10;
+    touch-action: none; /* Enable touch dragging on mobile */
+    user-select: none; /* Prevent text selection while dragging */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .ranking-item .rank-number {

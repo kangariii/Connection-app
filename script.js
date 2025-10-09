@@ -17,6 +17,7 @@ let compatibilityPlayer2Answers = [];
 let compatibilityPlayer1Ready = false;
 let compatibilityPlayer2Ready = false;
 let isProcessingCompatibilityAnswer = false;
+let continueListener = null; // Track continue listener to prevent duplicates
 
 // Knowledge Quiz State
 let knowledgeQuestionsList = [];
@@ -1466,7 +1467,17 @@ function startGameByMode() {
 // ========================================
 
 function startCompatibilityTest() {
-    console.log('Starting Compatibility Test');
+    console.log('🎮 Starting Compatibility Test');
+
+    // CRITICAL FIX: Clean up any existing listeners
+    if (compatibilityQuestionListener !== null) {
+        database.ref(`rooms/${roomCode}/compatibility/${compatibilityQuestionListener}`).off('value');
+        compatibilityQuestionListener = null;
+    }
+    if (continueListener !== null) {
+        database.ref(`rooms/${roomCode}/compatibility/${continueListener.questionIndex}`).off('value', continueListener.callback);
+        continueListener = null;
+    }
 
     // Reset compatibility state
     compatibilityCurrentQuestion = 0;
@@ -1474,54 +1485,98 @@ function startCompatibilityTest() {
     compatibilityPlayer2Answers = [];
     compatibilityPlayer1Ready = false;
     compatibilityPlayer2Ready = false;
+    isProcessingCompatibilityAnswer = false;
+
+    // CRITICAL FIX: Clear all Firebase compatibility data for fresh start
+    if (isOnlineMode && isFirebaseConnected && roomCode) {
+        console.log('🧹 Clearing old compatibility data from Firebase');
+        database.ref(`rooms/${roomCode}/compatibility`).remove().then(() => {
+            console.log('✅ Firebase compatibility data cleared');
+            // Start first question after cleanup
+            displayCompatibilityQuestion();
+        }).catch(error => {
+            console.error('❌ Error clearing compatibility data:', error);
+            // Start anyway
+            displayCompatibilityQuestion();
+        });
+    } else {
+        // Offline mode - just start
+        displayCompatibilityQuestion();
+    }
 
     // Show compatibility screen
     showScreen('compatibility-screen');
-
-    // Start first question (which will set up the listener)
-    displayCompatibilityQuestion();
 }
 
 let compatibilityQuestionListener = null;
 
 function setupCompatibilityListener() {
-    if (!isOnlineMode || !isFirebaseConnected) return;
+    if (!isOnlineMode || !isFirebaseConnected) {
+        console.log('⚠️ Skipping listener setup - offline mode or not connected');
+        return;
+    }
 
-    console.log('Setting up compatibility listener for question', compatibilityCurrentQuestion);
+    console.log('🎧 Setting up compatibility listener for question', compatibilityCurrentQuestion);
+    console.log('   Player number:', playerNumber);
+    console.log('   Room code:', roomCode);
 
     // Remove old listener if exists
-    if (compatibilityQuestionListener) {
+    if (compatibilityQuestionListener !== null) {
+        console.log('🧹 Cleaning up old listener for question', compatibilityQuestionListener);
         database.ref(`rooms/${roomCode}/compatibility/${compatibilityQuestionListener}`).off('value');
+        compatibilityQuestionListener = null;
     }
 
     // Listen only to CURRENT question
     const currentQ = compatibilityCurrentQuestion;
     compatibilityQuestionListener = currentQ;
 
+    console.log('📡 Attaching listener to:', `rooms/${roomCode}/compatibility/${currentQ}`);
+
     database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).on('value', (snapshot) => {
         const data = snapshot.val();
-        if (!data) return;
 
-        console.log(`Question ${currentQ} data updated:`, data);
+        console.log(`🔔 LISTENER FIRED for Q${currentQ}:`, {
+            hasData: !!data,
+            data: data,
+            currentQuestion: compatibilityCurrentQuestion,
+            playerNumber: playerNumber,
+            isProcessing: isProcessingCompatibilityAnswer
+        });
+
+        if (!data) {
+            console.log('   No data yet, waiting...');
+            return;
+        }
+
+        // CRITICAL FIX: Check if we've already moved past this question
+        if (currentQ !== compatibilityCurrentQuestion) {
+            console.log('⚠️ Already moved past this question, skipping...');
+            return;
+        }
 
         // Prevent race condition by checking if we're already processing
         if (isProcessingCompatibilityAnswer) {
-            console.log('Already processing answer, skipping...');
+            console.log('⚠️ Already processing answer, skipping...');
             return;
         }
 
         // Store the other player's answer if available
         if (playerNumber === 1 && data.player2Answer) {
+            console.log('📥 Player 1 received Player 2 answer');
             compatibilityPlayer2Answers[currentQ] = data.player2Answer;
             compatibilityPlayer2Ready = true;
         } else if (playerNumber === 2 && data.player1Answer) {
+            console.log('📥 Player 2 received Player 1 answer');
             compatibilityPlayer1Answers[currentQ] = data.player1Answer;
             compatibilityPlayer1Ready = true;
         }
 
         // If both players have answered this question, show comparison
         if (data.player1Answer && data.player2Answer) {
-            console.log('Both players answered question', currentQ);
+            console.log('✅ BOTH PLAYERS ANSWERED! Showing comparison...');
+            console.log('   Player 1 answer:', data.player1Answer);
+            console.log('   Player 2 answer:', data.player2Answer);
 
             // Mark as processing to prevent race condition
             isProcessingCompatibilityAnswer = true;
@@ -1539,19 +1594,32 @@ function setupCompatibilityListener() {
             compatibilityPlayer2Ready = false;
 
             // Remove listener for this question
+            console.log('🧹 Removing listener for Q', currentQ);
             database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).off('value');
             compatibilityQuestionListener = null;
 
             // Show comparison screen after brief delay
             setTimeout(() => {
+                console.log('🎬 Showing comparison screen for Q', currentQ);
                 showCompatibilityComparison(currentQ);
+                // Reset processing flag after showing comparison
+                isProcessingCompatibilityAnswer = false;
             }, 1000);
+        } else {
+            console.log('⏳ Waiting for other player...', {
+                hasPlayer1Answer: !!data.player1Answer,
+                hasPlayer2Answer: !!data.player2Answer
+            });
         }
     });
+
+    console.log('✅ Listener setup complete for Q', currentQ);
 }
 
 function displayCompatibilityQuestion() {
     const questionIndex = compatibilityCurrentQuestion;
+
+    console.log(`displayCompatibilityQuestion called for question ${questionIndex}`);
 
     if (questionIndex >= compatibilityQuestions.length) {
         // All questions answered
@@ -1597,14 +1665,14 @@ function displayCompatibilityQuestion() {
     // Add drag and drop event listeners
     setupRankingDragAndDrop();
 
+    // Show question display, hide waiting (always show question form when displaying)
+    document.getElementById('compatibility-question-display').classList.remove('hidden');
+    document.getElementById('compatibility-waiting').classList.add('hidden');
+
     // Set up listener for this question (online mode only)
     if (isOnlineMode && isFirebaseConnected) {
         setupCompatibilityListener();
     }
-
-    // Show question display, hide waiting
-    document.getElementById('compatibility-question-display').classList.remove('hidden');
-    document.getElementById('compatibility-waiting').classList.add('hidden');
 
     console.log(`Displaying compatibility question ${questionIndex + 1}/${compatibilityQuestions.length}`);
 }
@@ -1616,12 +1684,18 @@ function setupRankingDragAndDrop() {
     const rankingItems = document.querySelectorAll('.ranking-item');
 
     rankingItems.forEach(item => {
+        // Desktop drag and drop
         item.addEventListener('dragstart', handleDragStart);
         item.addEventListener('dragover', handleDragOver);
         item.addEventListener('drop', handleDrop);
         item.addEventListener('dragend', handleDragEnd);
         item.addEventListener('dragenter', handleDragEnter);
         item.addEventListener('dragleave', handleDragLeave);
+
+        // Mobile touch events
+        item.addEventListener('touchstart', handleTouchStart, { passive: false });
+        item.addEventListener('touchmove', handleTouchMove, { passive: false });
+        item.addEventListener('touchend', handleTouchEnd, { passive: false });
     });
 }
 
@@ -1689,6 +1763,78 @@ function updateRankNumbers() {
     });
 }
 
+// Touch event handlers for mobile drag and drop
+let touchStartY = 0;
+let touchedItem = null;
+let touchClone = null;
+
+function handleTouchStart(e) {
+    touchedItem = this;
+    touchStartY = e.touches[0].clientY;
+
+    // Create a visual clone for dragging
+    touchClone = this.cloneNode(true);
+    touchClone.style.position = 'fixed';
+    touchClone.style.left = this.getBoundingClientRect().left + 'px';
+    touchClone.style.top = e.touches[0].clientY - 20 + 'px';
+    touchClone.style.width = this.offsetWidth + 'px';
+    touchClone.style.opacity = '0.8';
+    touchClone.style.zIndex = '1000';
+    touchClone.style.pointerEvents = 'none';
+    document.body.appendChild(touchClone);
+
+    this.classList.add('dragging');
+    e.preventDefault();
+}
+
+function handleTouchMove(e) {
+    if (!touchedItem || !touchClone) return;
+
+    e.preventDefault();
+
+    // Move the clone with the touch
+    const touch = e.touches[0];
+    touchClone.style.top = touch.clientY - 20 + 'px';
+
+    // Find which item we're over
+    const items = Array.from(document.querySelectorAll('.ranking-item'));
+    const targetItem = items.find(item => {
+        if (item === touchedItem) return false;
+        const rect = item.getBoundingClientRect();
+        return touch.clientY >= rect.top && touch.clientY <= rect.bottom;
+    });
+
+    if (targetItem) {
+        const container = touchedItem.parentNode;
+        const touchedIndex = items.indexOf(touchedItem);
+        const targetIndex = items.indexOf(targetItem);
+
+        if (touchedIndex < targetIndex) {
+            container.insertBefore(touchedItem, targetItem.nextSibling);
+        } else {
+            container.insertBefore(touchedItem, targetItem);
+        }
+
+        updateRankNumbers();
+    }
+}
+
+function handleTouchEnd(e) {
+    if (!touchedItem) return;
+
+    e.preventDefault();
+
+    // Clean up
+    if (touchClone) {
+        document.body.removeChild(touchClone);
+        touchClone = null;
+    }
+
+    touchedItem.classList.remove('dragging');
+    touchedItem = null;
+    touchStartY = 0;
+}
+
 // Submit ranking function
 function submitRanking() {
     console.log('Submit ranking called');
@@ -1738,18 +1884,33 @@ function submitRanking() {
 
 async function syncCompatibilityAnswer(answer) {
     if (!isOnlineMode || !isFirebaseConnected) {
+        console.log('Skipping sync - offline mode or not connected');
         return Promise.resolve();
     }
 
+    const currentQ = compatibilityCurrentQuestion;
+    const answerKey = playerNumber === 1 ? 'player1Answer' : 'player2Answer';
+
+    console.log('🔄 SYNCING ANSWER:', {
+        question: currentQ,
+        playerNumber: playerNumber,
+        answerKey: answerKey,
+        roomCode: roomCode,
+        answer: answer
+    });
+
     try {
-        const answerKey = playerNumber === 1 ? 'player1Answer' : 'player2Answer';
-        await database.ref(`rooms/${roomCode}/compatibility/${compatibilityCurrentQuestion}`).update({
+        await database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).update({
             [answerKey]: answer,
             [`${answerKey}Timestamp`]: Date.now()
         });
-        console.log('Compatibility answer synced');
+        console.log('✅ Compatibility answer synced successfully');
+
+        // Log current Firebase state
+        const snapshot = await database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).once('value');
+        console.log('📊 Firebase state after sync:', snapshot.val());
     } catch (error) {
-        console.error('Failed to sync compatibility answer:', error);
+        console.error('❌ Failed to sync compatibility answer:', error);
     }
 }
 
@@ -1878,6 +2039,12 @@ function continueToNextQuestion() {
 
         console.log('Attempting to mark player as ready...');
 
+        // CRITICAL FIX: Remove any existing continue listener before creating new one
+        if (continueListener !== null) {
+            database.ref(`rooms/${roomCode}/compatibility/${continueListener.questionIndex}`).off('value', continueListener.callback);
+            continueListener = null;
+        }
+
         // Mark this player as ready to continue
         database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).update({
             [readyKey + 'ToContinue']: true
@@ -1899,16 +2066,34 @@ function continueToNextQuestion() {
                     showWaitingForContinue();
 
                     // Listen for other player's ready status
-                    const continueListener = database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).on('value', (snapshot) => {
+                    const listenerCallback = (snapshot) => {
                         const data = snapshot.val();
                         console.log('Continue listener fired:', data);
+
+                        // CRITICAL FIX: Check if we've already moved past this question
+                        if (currentQ !== compatibilityCurrentQuestion) {
+                            console.log('Already moved past this question, cleaning up listener');
+                            database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).off('value', listenerCallback);
+                            continueListener = null;
+                            return;
+                        }
+
                         if (data && data.player1ReadyToContinue && data.player2ReadyToContinue) {
                             // Both ready now, advance
                             console.log('✓ Other player ready! Advancing...');
-                            database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).off('value', continueListener);
+                            database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).off('value', listenerCallback);
+                            continueListener = null;
                             advanceToNextQuestion();
                         }
-                    });
+                    };
+
+                    // Store listener reference for cleanup
+                    continueListener = {
+                        questionIndex: currentQ,
+                        callback: listenerCallback
+                    };
+
+                    database.ref(`rooms/${roomCode}/compatibility/${currentQ}`).on('value', listenerCallback);
                 }
             });
         }).catch(error => {
@@ -1945,6 +2130,17 @@ function advanceToNextQuestion() {
     // Reset processing flag
     isProcessingCompatibilityAnswer = false;
 
+    // CRITICAL FIX: Clear ready flags in Firebase for the previous question
+    const previousQ = compatibilityCurrentQuestion;
+    if (isOnlineMode && isFirebaseConnected && previousQ >= 0) {
+        database.ref(`rooms/${roomCode}/compatibility/${previousQ}`).update({
+            player1ReadyToContinue: null,
+            player2ReadyToContinue: null
+        }).catch(error => {
+            console.error('Error clearing ready flags:', error);
+        });
+    }
+
     // Move to next question
     compatibilityCurrentQuestion++;
 
@@ -1952,6 +2148,9 @@ function advanceToNextQuestion() {
         // All questions answered, show results
         showCompatibilityResults();
     } else {
+        // CRITICAL FIX: Explicitly show compatibility screen before displaying question
+        showScreen('compatibility-screen');
+
         // Show next question
         displayCompatibilityQuestion();
     }
