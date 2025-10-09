@@ -1255,9 +1255,13 @@ function receiveGameState(newGameState) {
     // Start the game if it hasn't started yet and we're not already in a game
     const isInGame = document.getElementById('game-screen').classList.contains('active') ||
                      document.getElementById('compatibility-screen').classList.contains('active') ||
-                     document.getElementById('knowledge-screen').classList.contains('active');
+                     document.getElementById('compatibility-comparison-screen').classList.contains('active') ||
+                     document.getElementById('compatibility-results-screen').classList.contains('active') ||
+                     document.getElementById('knowledge-screen').classList.contains('active') ||
+                     document.getElementById('knowledge-results-screen').classList.contains('active');
 
     if (gameState.gameStarted && !isInGame) {
+        console.log('Game started but not in game screen, starting game by mode...');
         startGameByMode();
     } else if (gameState.gameStarted && currentGameMode === 'connection') {
         // Connection mode specific updates
