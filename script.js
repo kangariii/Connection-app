@@ -1756,10 +1756,13 @@ function handleDragEnd(e) {
 }
 
 function updateRankNumbers() {
-    const rankingItems = document.querySelectorAll('.ranking-item');
+    // Only update items in the actual list (not touch clones)
+    const rankingItems = document.querySelectorAll('.compatibility-ranking-list .ranking-item:not(.touch-clone)');
     rankingItems.forEach((item, index) => {
         const rankNumber = item.querySelector('.rank-number');
-        rankNumber.textContent = index + 1;
+        if (rankNumber) {
+            rankNumber.textContent = index + 1;
+        }
     });
 }
 
@@ -1781,6 +1784,7 @@ function handleTouchStart(e) {
     touchClone.style.opacity = '0.8';
     touchClone.style.zIndex = '1000';
     touchClone.style.pointerEvents = 'none';
+    touchClone.classList.add('touch-clone'); // Mark as clone so updateRankNumbers ignores it
     document.body.appendChild(touchClone);
 
     this.classList.add('dragging');
@@ -2124,31 +2128,39 @@ function showWaitingForContinue() {
     }
 }
 
-function advanceToNextQuestion() {
-    console.log('Advancing to next question');
+async function advanceToNextQuestion() {
+    console.log('🚀 Advancing to next question');
 
     // Reset processing flag
     isProcessingCompatibilityAnswer = false;
 
-    // CRITICAL FIX: Clear ready flags in Firebase for the previous question
     const previousQ = compatibilityCurrentQuestion;
-    if (isOnlineMode && isFirebaseConnected && previousQ >= 0) {
-        database.ref(`rooms/${roomCode}/compatibility/${previousQ}`).update({
-            player1ReadyToContinue: null,
-            player2ReadyToContinue: null
-        }).catch(error => {
-            console.error('Error clearing ready flags:', error);
-        });
-    }
 
-    // Move to next question
+    // Move to next question FIRST
     compatibilityCurrentQuestion++;
+    console.log(`Moving from Q${previousQ} to Q${compatibilityCurrentQuestion}`);
+
+    // CRITICAL FIX: Clear ready flags AFTER advancing to prevent race condition
+    if (isOnlineMode && isFirebaseConnected && previousQ >= 0) {
+        console.log(`🧹 Clearing ready flags for Q${previousQ}`);
+        try {
+            await database.ref(`rooms/${roomCode}/compatibility/${previousQ}`).update({
+                player1ReadyToContinue: null,
+                player2ReadyToContinue: null
+            });
+            console.log('✅ Ready flags cleared');
+        } catch (error) {
+            console.error('❌ Error clearing ready flags:', error);
+        }
+    }
 
     if (compatibilityCurrentQuestion >= compatibilityQuestions.length) {
         // All questions answered, show results
+        console.log('🏁 All questions complete, showing results');
         showCompatibilityResults();
     } else {
         // CRITICAL FIX: Explicitly show compatibility screen before displaying question
+        console.log(`📋 Showing Q${compatibilityCurrentQuestion + 1} screen`);
         showScreen('compatibility-screen');
 
         // Show next question
