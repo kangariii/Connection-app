@@ -69,7 +69,7 @@ export default function LobbyScreen({ gameMode, relationshipType, onStartGame, i
           console.log(`🎮 Starting game with ${p1.name} and ${p2.name}`);
           // Small delay to ensure Firebase sync
           setTimeout(() => {
-            onStartGame(p1.name, p2.name);
+            onStartGame(p1.name, p2.name, playerNumber);
           }, 500);
         } else {
           if (p1) console.log('Player 1:', p1.name || 'no name', 'ready:', p1.ready);

@@ -1,117 +1,197 @@
-# Testing Guide for Who Are You? Game
+# Testing Guide for New Game Modes
 
-## How to Test Properly
+## ✅ Setup Complete
+- Expo server running at: http://localhost:8081
+- Chrome opened for Player 1
+- Safari opened for Player 2
 
-### 1. Open Browser Console
-- **Chrome/Safari on Mobile**: Connect your phone to computer, use remote debugging
-- **Or use Desktop**: Right-click → Inspect → Console tab
-- Keep console open while testing to see all error messages
+---
 
-### 2. Complete Game Flow Test
+## 🎮 Test 1: "Deepen Your Connection" Mode
 
-**Start a Game:**
-1. Open the app
-2. Click "Create Game"
-3. Select a relationship type (e.g., "Best Friends (Same Gender)")
-4. Enter Player 1 name → Click "Begin Journey"
-5. **Check console** - should see: "Game started" messages
+### Player 1 (Chrome):
+1. Wait for splash screen to finish
+2. Click **"Deepen Your Connection"** button
+3. Click **"Create Game"** button
+4. Select a relationship type (e.g., "Friends", "Dating", "Married")
+5. **IMPORTANT**: Note the room code displayed (e.g., "APPLE", "YOUTH")
+6. Enter your name (e.g., "Mike")
+7. Click **"I'm Ready"** button
+8. Wait for Player 2...
 
-**Round 1:**
-1. Select category (e.g., "Favorites")
-2. **Check console** - should see: "SELECT CATEGORY CALLED", "Question retrieved: YES"
-3. **Verify question displays** on screen with category name
-4. Click "Next" button
-5. **Check**: Button should be visible (not cut off at bottom)
-6. **Verify**: Turn switches to Player 2 or shows "Round Complete"
+### Player 2 (Safari):
+1. Wait for splash screen to finish
+2. Click **"Deepen Your Connection"** button
+3. Click **"Join Game"** button
+4. Enter the room code from Player 1
+5. Enter your name (e.g., "Alex")
+6. Click **"I'm Ready"** button
 
-**Round 2-5:**
-1. Repeat for all 5 rounds
-2. **For each category selection, check console for:**
-   - "SELECT CATEGORY CALLED"
-   - "Question retrieved: YES"
-   - "Question displayed successfully ✓"
-3. **If you see "Question retrieved: NO"** - This is the bug! Screenshot the console and note:
-   - Which round?
-   - Which category?
-   - Which relationship type?
+### Gameplay (Both Players):
+1. **Round 1 Announcement** should appear
+2. **Player 1's turn first**:
+   - Player 1 sees 3 categories (Favorites, Daily Life, Fun Facts)
+   - Player 1 clicks a category
+   - Player 1 clicks a question
+   - Question displays for both players
+   - Player 1 clicks "Next"
 
-### 3. Scrolling Test
+3. **Player 2's turn**:
+   - Player 2 sees categories
+   - Player 2 selects category and question
+   - Both see the question
+   - Player 2 clicks "Next"
 
-**On Mobile:**
-1. Go to "Create Game" → "Family" relationship dropdown
-2. **Try to scroll** - should see all 14 family relationship options
-3. **Verify** you can reach the bottom options (Male & Female Cousins)
-4. Click one → **Check**: Back button doesn't overlap title
-5. **Scroll down** - verify "Begin Journey" button is fully visible
+4. **Round 2 starts** automatically
+   - Both see "Round 2" announcement
+   - Player 1 goes first again
+   - Continue same pattern
 
-**On Each Screen:**
-- Welcome Screen
-- Relationship Selection
-- Join Game
-- Game Screen (all 5 rounds)
-- Complete Screen
+5. **Complete all 5 rounds**
+6. Both players should see completion screen
 
-### 4. Common Issues to Report
+### ✅ What to verify:
+- [ ] Room code works across browsers
+- [ ] Firebase syncs player names
+- [ ] Turn alternation works (P1, P2, P1, P2...)
+- [ ] Categories appear correctly for each round
+- [ ] Questions load from database
+- [ ] Both players see same question
+- [ ] Progress bar updates
+- [ ] All 5 rounds complete successfully
+- [ ] No console errors
 
-**Question doesn't show:**
-- Open console before it happens again
-- Screenshot the console logs
-- Note: Round #, Category name, Relationship type
+---
 
-**Button cut off:**
-- Screenshot showing which button
-- Note: Screen name, mobile browser type
+## 🎯 Test 2: "How Well Do You Know Each Other?" Mode
 
-**Can't scroll:**
-- Note: Which screen, what content is hidden
+### Player 1 (Chrome):
+1. Refresh page (or restart app)
+2. Click **"How Well Do You Know Each Other?"**
+3. Click **"Create Game"**
+4. Note the room code
+5. Enter name: "Mike"
+6. Click **"I'm Ready"**
 
-### 5. Console Error Messages
+### Player 2 (Safari):
+1. Refresh page
+2. Click **"How Well Do You Know Each Other?"**
+3. Click **"Join Game"**
+4. Enter room code
+5. Enter name: "Alex"
+6. Click **"I'm Ready"**
 
-Look for these in console:
-- ✅ **Good**: "Question displayed successfully ✓"
-- ❌ **Bad**: "CRITICAL ERROR: No question found"
-- ❌ **Bad**: "ERROR: Question display elements not found"
-- ❌ **Bad**: "No data found for category"
+### Gameplay (Both Players):
+1. **Question 1 - Player 1 Answers**:
+   - Player 1 sees a question with 4 options
+   - Player 1 selects an answer
+   - Player 2 waits (sees waiting state)
 
-## What I Fixed
+2. **Player 2 Predicts**:
+   - Player 2 sees same question
+   - Player 2 predicts what Player 1 answered
+   - Player 1 waits
 
-### Bottom Padding (Buttons Cut Off)
-- Added 80px bottom padding to all screens
-- Added 100px bottom padding on mobile (768px)
-- Added 120px bottom padding on small mobile (480px)
-- Added margin-bottom to containers
+3. **Result Screen**:
+   - Both see if prediction was correct (✓ or ✗)
+   - Scores update
+   - Click "Continue"
 
-### Enhanced Logging
-- Added detailed console logs for question selection
-- Shows when question retrieval fails
-- Shows when display elements are missing
-- Easier to debug issues now
+4. **Question 2 - Player 2 Answers**:
+   - Player 2 answers
+   - Player 1 predicts
+   - Result shown
 
-### Error Handling
-- Now shows alert if question is empty
-- Won't try to display broken questions
-- Better error messages for debugging
+5. **Continue alternating** for all 15 questions
 
-## How to Share Issues
+6. **Final Results**:
+   - Both see final scores
+   - Player 1 Score: X/15
+   - Player 2 Score: Y/15
 
-When reporting bugs, include:
-1. **Screenshot of console** (most important!)
-2. Device type (iPhone X, Pixel 6, etc.)
-3. Browser (Chrome, Safari, etc.)
-4. Exact steps to reproduce
-5. Which round and category
+### ✅ What to verify:
+- [ ] Room code connects both players
+- [ ] Alternating answerer/predictor roles work
+- [ ] Answer syncs via Firebase
+- [ ] Prediction phase appears after answer
+- [ ] Correct/incorrect feedback shows
+- [ ] Scores increment properly
+- [ ] All 15 questions complete
+- [ ] Results screen shows final scores
+- [ ] No console errors
 
-## Testing Checklist
+---
 
-- [ ] Splash screen shows then transitions
-- [ ] Create game flow works
-- [ ] All relationship types load questions
-- [ ] Round 1: All 3 categories show questions
-- [ ] Round 2: All 3 categories show questions
-- [ ] Round 3: All 3 categories show questions
-- [ ] Round 4: All 3 categories show questions
-- [ ] Round 5: All 3 categories show questions
-- [ ] All buttons visible on mobile (not cut off)
-- [ ] Can scroll on all screens
-- [ ] Back button doesn't overlap titles
-- [ ] Complete game without errors
+## 🐛 Common Issues to Check
+
+### Firebase Connection:
+- Open browser console (F12)
+- Look for console.log messages with emojis:
+  - 🎮 = Game mode selection
+  - 📡 = Firebase sync
+  - ✅ = Success
+  - ❌ = Errors
+
+### If game doesn't start:
+- Check both players entered names
+- Check both players clicked "I'm Ready"
+- Look for Firebase sync logs in console
+
+### If turns don't work:
+- Only active player should see categories/options
+- Other player should see "Waiting for [Name]..."
+
+### If questions don't load:
+- Check console for "questionsDatabase" or "knowledgeQuestions" errors
+- Verify data files exist in src/data/
+
+---
+
+## 📊 Expected Console Logs
+
+### GameScreen (Connection Mode):
+```
+🎮 GameScreen mounted with: {...}
+📡 Setting up game state listener for room: APPLE
+📡 Game state updated: {...}
+🎮 Starting Round 1
+✅ Category selected: Favorites
+✅ Question selected
+```
+
+### KnowledgeScreen (Quiz Mode):
+```
+🎯 KnowledgeScreen mounted with: {...}
+📡 Setting up knowledge quiz listeners for room: YOUTH
+✅ Answer selected: Option A
+📡 Knowledge question data updated: {...}
+🎯 Prediction selected: Option A
+✅ Correct! Score updated
+```
+
+---
+
+## ✅ Success Criteria
+
+Both game modes are fully working when:
+
+1. **Deepen Your Connection**:
+   - ✅ Completes all 5 rounds
+   - ✅ Turn alternation works
+   - ✅ Both players stay synced
+   - ✅ No Firebase errors
+
+2. **Knowledge Quiz**:
+   - ✅ Completes all 15 questions
+   - ✅ Scores track correctly
+   - ✅ Answer/predict phases work
+   - ✅ Results display properly
+
+---
+
+## 🚀 Next Steps
+
+**Current Status**: Ready for manual testing!
+**Server**: http://localhost:8081 (RUNNING)
+
+Both Chrome and Safari should already be open. Follow the test procedures above!

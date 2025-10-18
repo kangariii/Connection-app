@@ -26,6 +26,7 @@ export default function App() {
   const [isHost, setIsHost] = useState(false);
   const [roomCode, setRoomCode] = useState('');
   const [joinedPlayerId, setJoinedPlayerId] = useState(null);
+  const [playerNumber, setPlayerNumber] = useState(0);
 
   const screens = {
     splash: <SplashScreen onFinish={() => setCurrentScreen('welcome')} />,
@@ -71,9 +72,10 @@ export default function App() {
       isHost={isHost}
       roomCode={roomCode}
       joinedPlayerId={joinedPlayerId}
-      onStartGame={(p1, p2) => {
+      onStartGame={(p1, p2, pNum) => {
         setPlayer1Name(p1);
         setPlayer2Name(p2);
+        setPlayerNumber(pNum);
         if (gameMode === 'connection') {
           setCurrentScreen('game');
         } else if (gameMode === 'compatibility') {
@@ -87,6 +89,9 @@ export default function App() {
       player1Name={player1Name}
       player2Name={player2Name}
       relationshipType={relationshipType}
+      roomCode={roomCode}
+      playerId={joinedPlayerId}
+      playerNumber={playerNumber}
       onComplete={() => setCurrentScreen('complete')}
     />,
     compatibility: <CompatibilityScreen
@@ -109,6 +114,9 @@ export default function App() {
     knowledge: <KnowledgeScreen
       player1Name={player1Name}
       player2Name={player2Name}
+      roomCode={roomCode}
+      playerId={joinedPlayerId}
+      playerNumber={playerNumber}
       onComplete={() => setCurrentScreen('knowledgeResults')}
     />,
     knowledgeResults: <KnowledgeResultsScreen
