@@ -71,16 +71,17 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
           console.log('✅✅✅ BOTH ANSWERS DETECTED! Showing comparison for BOTH players');
           hasShownComparison = true;
 
-          // Store comparison data
-          setComparisonData({
-            player1Answer: data.player1Answer,
-            player2Answer: data.player2Answer
-          });
-
-          // Force show comparison screen
-          setShowWaiting(false);
-          setShowComparison(true);
-          console.log('   Set showComparison = TRUE');
+          // Use a single batched update to avoid race conditions
+          // React batches setState calls automatically, but we make it explicit
+          setTimeout(() => {
+            setComparisonData({
+              player1Answer: data.player1Answer,
+              player2Answer: data.player2Answer
+            });
+            setShowWaiting(false);
+            setShowComparison(true);
+            console.log('   ✅ Comparison screen activated');
+          }, 0);
         } else if (!data.player1Answer || !data.player2Answer) {
           console.log('⏳ Still waiting...', {
             hasP1: !!data.player1Answer,
@@ -150,6 +151,21 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
 
         // Show waiting state
         setShowWaiting(true);
+
+        // Immediately check if both answers are now available
+        const snapshot = await database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).once('value');
+        const data = snapshot.val();
+        console.log('🔍 Checking Firebase after submit:', data);
+
+        if (data && data.player1Answer && data.player2Answer) {
+          console.log('🎉 BOTH ANSWERS ALREADY IN FIREBASE! Showing comparison immediately');
+          setComparisonData({
+            player1Answer: data.player1Answer,
+            player2Answer: data.player2Answer
+          });
+          setShowWaiting(false);
+          setShowComparison(true);
+        }
       } catch (error) {
         console.error('❌ Failed to sync answer:', error);
       }
