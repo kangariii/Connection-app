@@ -345,5 +345,120 @@ For the next AI assistant picking up this project:
 
 ---
 
-**Last Updated**: January 2025 (Checkpoint: `123d2d9`)
-**Latest Working Feature**: Full Compatibility Test mode in mobile app with Firebase multiplayer
+## 🔄 Latest Session Updates (October 2025)
+
+### Recent Implementations & Fixes
+
+**Session Focus**: Implementing new game modes and fixing Firebase synchronization issues
+
+#### ✅ Implemented Features
+
+1. **"Deepen Your Connection" Mode (Mobile)** - Commit `0d99247`
+   - GameScreen.js with 5 progressive rounds
+   - Turn-based multiplayer with Firebase sync
+   - 1,350+ questions across 15 categories (questionsDatabase.js)
+   - Category selection per round with themed progression
+   - Round announcements and progress tracking
+
+2. **"Knowledge Quiz" Mode (Mobile)** - Commit `0d99247`
+   - KnowledgeScreen.js with 15-question quiz format
+   - Alternating answerer/predictor gameplay
+   - Real-time score tracking
+   - 30+ quiz questions (knowledgeQuestions.js)
+   - Visual feedback for correct/incorrect predictions
+
+3. **Tap-to-Swap Ranking Interface** - Commit `ce77405`
+   - Replaced complex drag-and-drop with simple tap interface
+   - Tap item to select (purple highlight + checkmark)
+   - Tap another item to swap positions
+   - Works perfectly on mobile and web
+
+#### 🐛 Major Bug Fixes
+
+1. **Firebase Sync - Comparison Screen** - Commits `3d7c659`, `a5a67ff`, `99a64f7`
+   - **Issue**: Players stuck on different screens after submitting answers
+   - **Root Cause**: Firebase listener timing issues and React state update race conditions
+   - **Solution**:
+     - Dual-path comparison trigger (listener + immediate check)
+     - `hasShownComparison` flag prevents duplicate triggers
+     - Direct Firebase check after submit for immediate sync
+     - `comparisonData` state stores Firebase data directly
+
+2. **Comparison Screen Rendering** - Commit `800376b`
+   - **Issue**: Crash with "Cannot convert undefined value to object"
+   - **Solution**: Added safety checks for rankings before sorting
+
+3. **Player Synchronization** - Commit `96868b4`
+   - Added waiting states when one player submits
+   - Both players must click "Continue" to advance together
+   - Firebase `readyToContinue` flags for coordination
+
+#### ⚠️ Known Issues (IN PROGRESS)
+
+1. **Firebase Sync Still Flaky**
+   - Sometimes one player sees "Loading comparison..." while other sees "Waiting for other player..."
+   - Last attempted fix: Immediate Firebase check after submit (commit `99a64f7`)
+   - **Next steps**: Need to debug why listener doesn't fire reliably for both players
+
+#### 🛠️ Useful Commands
+
+**Kill All Servers**:
+```bash
+pkill -9 -f "expo" && pkill -9 -f "node" && lsof -ti:8081 | xargs kill -9 2>/dev/null && echo "✅ All servers killed"
+```
+
+**Start Fresh**:
+```bash
+cd /Users/michaelsoni/Documents/GitHub/Connection-app/connection-app-mobile
+npx expo start --clear
+```
+
+**Test Multiplayer (Web)**:
+- Chrome: Player 1 - Create game
+- Safari: Player 2 - Join with room code
+- Both: Test synchronization
+
+**Test Multiplayer (Mobile)**:
+- Scan QR code with Expo Go app
+- Or press `w` in terminal for web browser
+
+#### 📊 File Changes This Session
+
+**New Files**:
+- `connection-app-mobile/src/screens/GameScreen.js` (643 lines)
+- `connection-app-mobile/src/screens/KnowledgeScreen.js` (492 lines)
+- `connection-app-mobile/src/data/questionsDatabase.js` (1,350+ questions)
+- `connection-app-mobile/src/data/knowledgeQuestions.js` (30+ questions)
+
+**Modified Files**:
+- `connection-app-mobile/src/screens/CompatibilityScreen.js` (extensive Firebase sync fixes)
+- `connection-app-mobile/App.js` (added roomCode, playerId, playerNumber props)
+- `connection-app-mobile/src/screens/LobbyScreen.js` (playerNumber handling)
+
+#### 🎯 Next Session Priorities
+
+1. **Fix Firebase sync completely** - Ensure both players always see comparison screen together
+2. **Test full game flow** - End-to-end testing of all 10 questions
+3. **Test new game modes** - GameScreen and KnowledgeScreen need full testing
+4. **Handle edge cases** - Disconnections, refreshes, concurrent games
+
+#### 🔍 Debugging Tips
+
+**Console Logs to Watch**:
+- `✅✅✅ BOTH ANSWERS DETECTED!` - Comparison should trigger
+- `🎉 BOTH ANSWERS ALREADY IN FIREBASE!` - Immediate check worked
+- `📡 Listener fired for Q X` - Firebase listener is working
+- `playerNumber:` - Should be 1 or 2 (not 0)
+
+**Common Issues**:
+- Port 8081 already in use → Run kill command above
+- Comparison screen not showing → Check browser console logs
+- One player stuck waiting → Firebase sync issue (check logs)
+
+---
+
+**Last Updated**: October 2025 (Checkpoint: `99a64f7`)
+**Latest Commits**:
+- `99a64f7` - Add immediate Firebase check after submitting answer
+- `ce77405` - Replace drag-and-drop with tap-to-swap interface
+- `0d99247` - Implement "Deepen Your Connection" and "Knowledge Quiz" modes
