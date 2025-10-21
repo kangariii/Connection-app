@@ -11,6 +11,7 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
   const [player2Answers, setPlayer2Answers] = useState([]);
   const [rankedOptions, setRankedOptions] = useState([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [comparisonData, setComparisonData] = useState(null); // Store Firebase data for comparison
   const [showWaiting, setShowWaiting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -61,24 +62,29 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
         if (data.player1Answer && data.player2Answer) {
           console.log('✅ Both players answered! Showing comparison...');
 
-          // Store both answers
+          // Store both answers using callbacks to ensure sync
           setPlayer1Answers(prev => {
             const newAnswers = [...prev];
             newAnswers[currentQuestion] = data.player1Answer;
-            return newAnswers;
-          });
-          setPlayer2Answers(prev => {
-            const newAnswers = [...prev];
-            newAnswers[currentQuestion] = data.player2Answer;
+            console.log('💾 Stored player1 answer:', data.player1Answer);
             return newAnswers;
           });
 
-          // Show comparison after brief delay
-          setTimeout(() => {
-            setShowWaiting(false);
-            setShowComparison(true);
-            setIsProcessing(false);
-          }, 500);
+          setPlayer2Answers(prev => {
+            const newAnswers = [...prev];
+            newAnswers[currentQuestion] = data.player2Answer;
+            console.log('💾 Stored player2 answer:', data.player2Answer);
+            return newAnswers;
+          });
+
+          // Store comparison data and show comparison screen
+          setComparisonData({
+            player1Answer: data.player1Answer,
+            player2Answer: data.player2Answer
+          });
+          setShowWaiting(false);
+          setShowComparison(true);
+          setIsProcessing(false);
         } else {
           console.log('⏳ Waiting for other player...', {
             hasPlayer1Answer: !!data.player1Answer,
@@ -210,6 +216,7 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
     setShowComparison(false);
     setShowWaiting(false);
     setIsProcessing(false);
+    setComparisonData(null); // Reset comparison data
 
     if (currentQuestion + 1 >= compatibilityQuestions.length) {
       // All questions complete - pass answers to results
@@ -242,12 +249,14 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
 
   if (showComparison) {
     const question = compatibilityQuestions[currentQuestion];
-    const ranking1 = player1Answers[currentQuestion];
-    const ranking2 = player2Answers[currentQuestion];
+
+    // Use comparisonData if available, otherwise fall back to state
+    const ranking1 = comparisonData ? comparisonData.player1Answer : player1Answers[currentQuestion];
+    const ranking2 = comparisonData ? comparisonData.player2Answer : player2Answers[currentQuestion];
 
     // Safety check - both rankings must exist
     if (!ranking1 || !ranking2) {
-      console.log('⚠️ Missing rankings, waiting...', { ranking1, ranking2 });
+      console.log('⚠️ Missing rankings, waiting...', { ranking1, ranking2, comparisonData });
       return (
         <View style={styles.container}>
           <View style={styles.waitingContainer}>
@@ -258,7 +267,18 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
       );
     }
 
-    const matchPercentage = calculateQuestionMatch();
+    // Calculate match percentage using the rankings we have
+    let totalPoints = 0;
+    let maxPoints = 0;
+    question.options.forEach(option => {
+      const rank1 = ranking1[option.id];
+      const rank2 = ranking2[option.id];
+      const difference = Math.abs(rank1 - rank2);
+      const points = 3 - difference;
+      totalPoints += points;
+      maxPoints += 3;
+    });
+    const matchPercentage = Math.round((totalPoints / maxPoints) * 100);
 
     // Sort options by player 1's ranking for display
     const sortedByPlayer1 = [...question.options].sort((a, b) => ranking1[a.id] - ranking1[b.id]);
