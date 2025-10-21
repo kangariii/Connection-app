@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, PanResponder, Animated } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { compatibilityQuestions, calculateCompatibilityScore } from '../data/compatibilityQuestions';
 import { getDatabase } from '../config/firebase';
 
@@ -13,7 +13,7 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
   const [showComparison, setShowComparison] = useState(false);
   const [showWaiting, setShowWaiting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(null);
 
   const isOnlineMode = !!roomCode;
 
@@ -105,21 +105,17 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
     setRankedOptions(newRanked);
   };
 
-  const handleDragStart = (index) => {
-    console.log('🎯 Drag started at index:', index);
-    setDraggedIndex(index);
-  };
-
-  const handleDragOver = (index) => {
-    if (draggedIndex === null || draggedIndex === index) return;
-    console.log(`🔄 Dragging over index ${index}, dragged is ${draggedIndex}`);
-    moveOption(draggedIndex, index);
-    setDraggedIndex(index);
-  };
-
-  const handleDragEnd = () => {
-    console.log('✋ Drag ended');
-    setDraggedIndex(null);
+  const handleItemTap = (index) => {
+    if (selectedIndex === null) {
+      // First tap - select this item
+      console.log('🎯 Selected item at index:', index);
+      setSelectedIndex(index);
+    } else {
+      // Second tap - swap with selected item
+      console.log(`🔄 Swapping ${selectedIndex} with ${index}`);
+      moveOption(selectedIndex, index);
+      setSelectedIndex(null);
+    }
   };
 
   const submitRanking = async () => {
@@ -353,20 +349,26 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <Text style={styles.questionText}>{question.question}</Text>
         <Text style={styles.instruction}>
-          Press and hold to drag items. Most important at top, least important at bottom.
+          Tap an item to select it, then tap another to swap positions. Most important at top.
         </Text>
 
         <View style={styles.rankingList}>
           {rankedOptions.map((option, index) => (
-            <DraggableItem
+            <TouchableOpacity
               key={option.id}
-              option={option}
-              index={index}
-              isDragging={draggedIndex === index}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDragEnd={handleDragEnd}
-            />
+              style={styles.draggableItem}
+              onPress={() => handleItemTap(index)}
+              activeOpacity={0.7}
+            >
+              <View style={[
+                styles.rankingItem,
+                selectedIndex === index && styles.rankingItemSelected
+              ]}>
+                <Text style={styles.rankNumberBadge}>{index + 1}</Text>
+                <Text style={styles.optionText}>{option.text}</Text>
+                {selectedIndex === index && <Text style={styles.selectedIndicator}>✓</Text>}
+              </View>
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -375,77 +377,6 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
         </TouchableOpacity>
       </ScrollView>
     </View>
-  );
-}
-
-// Draggable Item Component - Simplified with parent state management
-function DraggableItem({ option, index, isDragging, onDragStart, onDragOver, onDragEnd }) {
-  const pan = useRef(new Animated.ValueXY()).current;
-  const [localDragging, setLocalDragging] = useState(false);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        setLocalDragging(true);
-        onDragStart(index);
-      },
-      onPanResponderMove: Animated.event(
-        [null, { dx: pan.x, dy: pan.y }],
-        {
-          useNativeDriver: false,
-          listener: (event, gestureState) => {
-            // Every 40 pixels of movement, check what item we're over
-            const itemHeight = 85;
-            const offset = gestureState.dy;
-            const steps = Math.round(offset / itemHeight);
-            const targetIndex = index + steps;
-
-            // Trigger drag over if we're hovering a different item
-            if (Math.abs(offset) > itemHeight / 3) {
-              onDragOver(targetIndex);
-            }
-          }
-        }
-      ),
-      onPanResponderRelease: () => {
-        setLocalDragging(false);
-        onDragEnd();
-
-        // Reset position
-        Animated.spring(pan, {
-          toValue: { x: 0, y: 0 },
-          useNativeDriver: false,
-          friction: 7
-        }).start();
-      }
-    })
-  ).current;
-
-  // Reset animation when component re-renders at new position
-  useEffect(() => {
-    pan.setValue({ x: 0, y: 0 });
-  }, [index]);
-
-  return (
-    <Animated.View
-      style={[
-        styles.draggableItem,
-        localDragging && {
-          transform: pan.getTranslateTransform(),
-          zIndex: 1000,
-          elevation: 8
-        }
-      ]}
-      {...panResponder.panHandlers}
-    >
-      <View style={[styles.rankingItem, localDragging && styles.rankingItemDragging]}>
-        <Text style={styles.rankNumberBadge}>{index + 1}</Text>
-        <Text style={styles.optionText}>{option.text}</Text>
-        <Text style={styles.dragHandle}>⋮⋮</Text>
-      </View>
-    </Animated.View>
   );
 }
 
@@ -517,14 +448,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  rankingItemDragging: {
-    backgroundColor: 'rgba(108, 99, 255, 0.3)',
+  rankingItemSelected: {
+    backgroundColor: 'rgba(108, 99, 255, 0.2)',
     borderColor: '#6c63ff',
+    borderWidth: 2,
     shadowColor: '#6c63ff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   rankNumberBadge: {
     width: 32,
@@ -544,12 +476,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
   },
-  dragHandle: {
-    color: 'rgba(255,255,255,0.4)',
+  selectedIndicator: {
+    color: '#6c63ff',
     fontSize: 24,
     fontWeight: '700',
     marginLeft: 10,
-    letterSpacing: -4,
   },
   waitingContainer: {
     flex: 1,
