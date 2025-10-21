@@ -332,44 +332,50 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
   );
 }
 
-// Draggable Item Component
+// Draggable Item Component with proper reordering
 function DraggableItem({ option, index, onMove, totalItems }) {
   const pan = useRef(new Animated.ValueXY()).current;
   const [isDragging, setIsDragging] = useState(false);
+  const lastSwapIndex = useRef(index);
+  const itemHeight = 85; // Height of each item including margin
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
+        console.log('🎯 Started dragging item at index:', index);
         setIsDragging(true);
-        pan.setOffset({
-          x: 0,
-          y: pan.y._value
-        });
+        lastSwapIndex.current = index;
+        pan.setOffset({ x: 0, y: 0 });
+        pan.setValue({ x: 0, y: 0 });
       },
       onPanResponderMove: (_, gesture) => {
+        // Move item visually
         pan.setValue({ x: 0, y: gesture.dy });
-      },
-      onPanResponderRelease: (_, gesture) => {
-        setIsDragging(false);
-        pan.flattenOffset();
 
-        // Calculate how many positions to move based on drag distance
-        const itemHeight = 80; // Approximate height of each item
-        const positions = Math.round(gesture.dy / itemHeight);
+        // Calculate which position we're hovering over
+        const currentOffset = gesture.dy;
+        const hoverIndex = Math.round(currentOffset / itemHeight);
+        const targetIndex = Math.max(0, Math.min(totalItems - 1, lastSwapIndex.current + hoverIndex));
 
-        if (positions !== 0) {
-          const newIndex = Math.max(0, Math.min(totalItems - 1, index + positions));
-          if (newIndex !== index) {
-            onMove(index, newIndex);
-          }
+        // If we've crossed into a new position, swap
+        if (targetIndex !== lastSwapIndex.current) {
+          console.log(`🔄 Swapping from ${lastSwapIndex.current} to ${targetIndex}`);
+          onMove(lastSwapIndex.current, targetIndex);
+          lastSwapIndex.current = targetIndex;
         }
+      },
+      onPanResponderRelease: () => {
+        console.log('✋ Released drag');
+        setIsDragging(false);
 
-        // Reset position
+        // Animate back to rest position
         Animated.spring(pan, {
           toValue: { x: 0, y: 0 },
-          useNativeDriver: false
+          useNativeDriver: false,
+          tension: 80,
+          friction: 10
         }).start();
       }
     })
@@ -382,7 +388,7 @@ function DraggableItem({ option, index, onMove, totalItems }) {
         {
           transform: pan.getTranslateTransform(),
           zIndex: isDragging ? 1000 : 1,
-          opacity: isDragging ? 0.8 : 1
+          elevation: isDragging ? 8 : 0
         }
       ]}
       {...panResponder.panHandlers}
