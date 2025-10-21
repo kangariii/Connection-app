@@ -215,10 +215,24 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
   };
 
   if (showComparison) {
-    const matchPercentage = calculateQuestionMatch();
     const question = compatibilityQuestions[currentQuestion];
     const ranking1 = player1Answers[currentQuestion];
     const ranking2 = player2Answers[currentQuestion];
+
+    // Safety check - both rankings must exist
+    if (!ranking1 || !ranking2) {
+      console.log('⚠️ Missing rankings, waiting...', { ranking1, ranking2 });
+      return (
+        <View style={styles.container}>
+          <View style={styles.waitingContainer}>
+            <Text style={styles.waitingText}>⏳</Text>
+            <Text style={styles.waitingTitle}>Loading comparison...</Text>
+          </View>
+        </View>
+      );
+    }
+
+    const matchPercentage = calculateQuestionMatch();
 
     // Sort options by player 1's ranking for display
     const sortedByPlayer1 = [...question.options].sort((a, b) => ranking1[a.id] - ranking1[b.id]);
