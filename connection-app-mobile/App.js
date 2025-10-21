@@ -97,6 +97,9 @@ export default function App() {
     compatibility: <CompatibilityScreen
       player1Name={player1Name}
       player2Name={player2Name}
+      roomCode={roomCode}
+      playerId={joinedPlayerId}
+      playerNumber={playerNumber}
       onComplete={(results) => {
         setCompatibilityResults(results);
         setCurrentScreen('compatibilityResults');

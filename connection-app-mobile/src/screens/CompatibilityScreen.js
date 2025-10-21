@@ -1,21 +1,89 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, PanResponder, Animated } from 'react-native';
 import { compatibilityQuestions, calculateCompatibilityScore } from '../data/compatibilityQuestions';
+import { getDatabase } from '../config/firebase';
 
-export default function CompatibilityScreen({ player1Name, player2Name, onComplete }) {
+const database = getDatabase();
+
+export default function CompatibilityScreen({ player1Name, player2Name, onComplete, roomCode, playerId, playerNumber }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [player1Answers, setPlayer1Answers] = useState([]);
   const [player2Answers, setPlayer2Answers] = useState([]);
-  const [currentPlayer, setCurrentPlayer] = useState(1);
   const [rankedOptions, setRankedOptions] = useState([]);
   const [showComparison, setShowComparison] = useState(false);
+  const [showWaiting, setShowWaiting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const isOnlineMode = !!roomCode;
 
   useEffect(() => {
+    console.log('🎮 CompatibilityScreen mounted:', { roomCode, playerId, playerNumber });
+
     // Initialize with current question's options
     if (currentQuestion < compatibilityQuestions.length) {
       setRankedOptions([...compatibilityQuestions[currentQuestion].options]);
     }
+
+    // Setup Firebase listeners if online
+    if (isOnlineMode) {
+      setupCompatibilityListener();
+    }
+
+    return () => {
+      // Cleanup listeners
+      if (isOnlineMode) {
+        database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).off();
+      }
+    };
   }, [currentQuestion]);
+
+  const setupCompatibilityListener = () => {
+    console.log('📡 Setting up compatibility listener for Q', currentQuestion);
+
+    database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).on('value', (snapshot) => {
+      const data = snapshot.val();
+      console.log('📡 Compatibility data updated:', data);
+
+      if (!data) return;
+
+      // Store the other player's answer if available
+      if (playerNumber === 1 && data.player2Answer) {
+        console.log('📥 Player 1 received Player 2 answer');
+        const newAnswers = [...player2Answers];
+        newAnswers[currentQuestion] = data.player2Answer;
+        setPlayer2Answers(newAnswers);
+      } else if (playerNumber === 2 && data.player1Answer) {
+        console.log('📥 Player 2 received Player 1 answer');
+        const newAnswers = [...player1Answers];
+        newAnswers[currentQuestion] = data.player1Answer;
+        setPlayer1Answers(newAnswers);
+      }
+
+      // If both players have answered, show comparison
+      if (data.player1Answer && data.player2Answer && !isProcessing) {
+        console.log('✅ Both players answered! Showing comparison...');
+        setIsProcessing(true);
+
+        // Store both answers
+        const newP1Answers = [...player1Answers];
+        const newP2Answers = [...player2Answers];
+        newP1Answers[currentQuestion] = data.player1Answer;
+        newP2Answers[currentQuestion] = data.player2Answer;
+        setPlayer1Answers(newP1Answers);
+        setPlayer2Answers(newP2Answers);
+
+        // Remove listener
+        database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).off();
+
+        // Show comparison after brief delay
+        setTimeout(() => {
+          setShowWaiting(false);
+          setShowComparison(true);
+          setIsProcessing(false);
+        }, 500);
+      }
+    });
+  };
 
   const moveOption = (fromIndex, toIndex) => {
     const newRanked = [...rankedOptions];
@@ -24,38 +92,104 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
     setRankedOptions(newRanked);
   };
 
-  const submitRanking = () => {
+  const submitRanking = async () => {
     const ranking = {};
     rankedOptions.forEach((option, index) => {
       ranking[option.id] = index + 1;
     });
 
-    if (currentPlayer === 1) {
+    console.log('✅ Submitting ranking:', ranking);
+
+    // Store answer locally
+    if (playerNumber === 1) {
       const newAnswers = [...player1Answers];
       newAnswers[currentQuestion] = ranking;
       setPlayer1Answers(newAnswers);
-      setCurrentPlayer(2);
-      // Reset for player 2
-      setRankedOptions([...compatibilityQuestions[currentQuestion].options]);
     } else {
       const newAnswers = [...player2Answers];
       newAnswers[currentQuestion] = ranking;
       setPlayer2Answers(newAnswers);
+    }
 
-      // Show comparison
+    if (isOnlineMode) {
+      // Sync answer to Firebase
+      try {
+        const answerKey = playerNumber === 1 ? 'player1Answer' : 'player2Answer';
+        await database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).update({
+          [answerKey]: ranking,
+          timestamp: Date.now()
+        });
+        console.log('✅ Answer synced to Firebase');
+
+        // Show waiting state
+        setShowWaiting(true);
+      } catch (error) {
+        console.error('❌ Failed to sync answer:', error);
+      }
+    } else {
+      // Offline mode - show comparison immediately
       setShowComparison(true);
     }
   };
 
-  const continueToNext = () => {
+  const continueToNext = async () => {
+    console.log('🚀 Continue clicked by player', playerNumber);
+
+    if (isOnlineMode) {
+      // Mark this player as ready to continue
+      const readyKey = playerNumber === 1 ? 'player1ReadyToContinue' : 'player2ReadyToContinue';
+
+      try {
+        await database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).update({
+          [readyKey]: true
+        });
+        console.log('✅ Marked as ready to continue');
+
+        // Check if both players are ready
+        const snapshot = await database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).once('value');
+        const data = snapshot.val();
+
+        if (data && data.player1ReadyToContinue && data.player2ReadyToContinue) {
+          // Both ready, advance immediately
+          console.log('✅ Both players ready! Advancing...');
+          advanceToNextQuestion();
+        } else {
+          // Wait for other player
+          console.log('⏳ Waiting for other player to continue...');
+          setShowWaiting(true);
+
+          // Listen for other player's ready status
+          const continueListener = database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).on('value', (snapshot) => {
+            const data = snapshot.val();
+
+            if (data && data.player1ReadyToContinue && data.player2ReadyToContinue) {
+              console.log('✅ Other player ready! Advancing...');
+              database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).off('value', continueListener);
+              advanceToNextQuestion();
+            }
+          });
+        }
+      } catch (error) {
+        console.error('❌ Error marking as ready:', error);
+      }
+    } else {
+      // Offline mode - advance immediately
+      advanceToNextQuestion();
+    }
+  };
+
+  const advanceToNextQuestion = () => {
+    console.log('🚀 Advancing to next question');
+
     setShowComparison(false);
+    setShowWaiting(false);
+    setIsProcessing(false);
 
     if (currentQuestion + 1 >= compatibilityQuestions.length) {
       // All questions complete - pass answers to results
       onComplete({ player1Answers, player2Answers });
     } else {
       setCurrentQuestion(currentQuestion + 1);
-      setCurrentPlayer(1);
     }
   };
 
@@ -137,12 +271,24 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
     );
   }
 
+  // Waiting state
+  if (showWaiting) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.waitingContainer}>
+          <Text style={styles.waitingText}>⏳</Text>
+          <Text style={styles.waitingTitle}>Waiting for other player...</Text>
+          <Text style={styles.waitingSubtitle}>They're reviewing their answer</Text>
+        </View>
+      </View>
+    );
+  }
+
   if (currentQuestion >= compatibilityQuestions.length) {
     return null;
   }
 
   const question = compatibilityQuestions[currentQuestion];
-  const currentPlayerName = currentPlayer === 1 ? player1Name : player2Name;
 
   return (
     <View style={styles.container}>
@@ -161,34 +307,20 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.playerTurn}>{currentPlayerName}'s turn</Text>
         <Text style={styles.questionText}>{question.question}</Text>
-        <Text style={styles.instruction}>Use arrows to reorder from most important (top) to least important (bottom)</Text>
+        <Text style={styles.instruction}>
+          Press and hold to drag items. Most important at top, least important at bottom.
+        </Text>
 
         <View style={styles.rankingList}>
           {rankedOptions.map((option, index) => (
-            <View key={option.id} style={styles.draggableItem}>
-              <View style={styles.rankingItem}>
-                <Text style={styles.rankNumberBadge}>{index + 1}</Text>
-                <Text style={styles.optionText}>{option.text}</Text>
-              </View>
-              <View style={styles.moveButtons}>
-                <TouchableOpacity
-                  style={[styles.moveButton, index === 0 && styles.moveButtonDisabled]}
-                  onPress={() => index > 0 && moveOption(index, index - 1)}
-                  disabled={index === 0}
-                >
-                  <Text style={styles.moveButtonText}>↑</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.moveButton, index === rankedOptions.length - 1 && styles.moveButtonDisabled]}
-                  onPress={() => index < rankedOptions.length - 1 && moveOption(index, index + 1)}
-                  disabled={index === rankedOptions.length - 1}
-                >
-                  <Text style={styles.moveButtonText}>↓</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            <DraggableItem
+              key={option.id}
+              option={option}
+              index={index}
+              onMove={moveOption}
+              totalItems={rankedOptions.length}
+            />
           ))}
         </View>
 
@@ -197,6 +329,70 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
         </TouchableOpacity>
       </ScrollView>
     </View>
+  );
+}
+
+// Draggable Item Component
+function DraggableItem({ option, index, onMove, totalItems }) {
+  const pan = useRef(new Animated.ValueXY()).current;
+  const [isDragging, setIsDragging] = useState(false);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        setIsDragging(true);
+        pan.setOffset({
+          x: 0,
+          y: pan.y._value
+        });
+      },
+      onPanResponderMove: (_, gesture) => {
+        pan.setValue({ x: 0, y: gesture.dy });
+      },
+      onPanResponderRelease: (_, gesture) => {
+        setIsDragging(false);
+        pan.flattenOffset();
+
+        // Calculate how many positions to move based on drag distance
+        const itemHeight = 80; // Approximate height of each item
+        const positions = Math.round(gesture.dy / itemHeight);
+
+        if (positions !== 0) {
+          const newIndex = Math.max(0, Math.min(totalItems - 1, index + positions));
+          if (newIndex !== index) {
+            onMove(index, newIndex);
+          }
+        }
+
+        // Reset position
+        Animated.spring(pan, {
+          toValue: { x: 0, y: 0 },
+          useNativeDriver: false
+        }).start();
+      }
+    })
+  ).current;
+
+  return (
+    <Animated.View
+      style={[
+        styles.draggableItem,
+        {
+          transform: pan.getTranslateTransform(),
+          zIndex: isDragging ? 1000 : 1,
+          opacity: isDragging ? 0.8 : 1
+        }
+      ]}
+      {...panResponder.panHandlers}
+    >
+      <View style={[styles.rankingItem, isDragging && styles.rankingItemDragging]}>
+        <Text style={styles.rankNumberBadge}>{index + 1}</Text>
+        <Text style={styles.optionText}>{option.text}</Text>
+        <Text style={styles.dragHandle}>⋮⋮</Text>
+      </View>
+    </Animated.View>
   );
 }
 
@@ -268,6 +464,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
+  rankingItemDragging: {
+    backgroundColor: 'rgba(108, 99, 255, 0.3)',
+    borderColor: '#6c63ff',
+    shadowColor: '#6c63ff',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
+  },
   rankNumberBadge: {
     width: 32,
     height: 32,
@@ -286,30 +491,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
   },
-  moveButtons: {
-    flexDirection: 'row',
+  dragHandle: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 24,
+    fontWeight: '700',
+    marginLeft: 10,
+    letterSpacing: -4,
+  },
+  waitingContainer: {
+    flex: 1,
     justifyContent: 'center',
-    marginTop: 10,
-    gap: 10,
+    alignItems: 'center',
+    padding: 40,
   },
-  moveButton: {
-    backgroundColor: 'rgba(108, 99, 255, 0.2)',
-    paddingHorizontal: 25,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#6c63ff',
-    minWidth: 50,
+  waitingText: {
+    fontSize: 64,
+    marginBottom: 20,
   },
-  moveButtonDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderColor: 'rgba(255,255,255,0.1)',
-    opacity: 0.3,
-  },
-  moveButtonText: {
-    color: '#fff',
-    fontSize: 18,
+  waitingTitle: {
+    fontSize: 22,
     fontWeight: '600',
+    color: '#fff',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  waitingSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.6)',
     textAlign: 'center',
   },
   submitButton: {
