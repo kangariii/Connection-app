@@ -31,65 +31,60 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
       console.log('📡 Setting up compatibility listener for Q', currentQuestion);
 
       const listenerRef = database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`);
+      let hasShownComparison = false; // Prevent multiple triggers
 
       const handleDataUpdate = (snapshot) => {
         const data = snapshot.val();
-        console.log('📡 Compatibility data updated for Q', currentQuestion, ':', data);
-        console.log('   My playerNumber:', playerNumber, 'showComparison:', showComparison, 'showWaiting:', showWaiting);
+        console.log('📡 Listener fired for Q', currentQuestion, 'data:', data);
+        console.log('   playerNumber:', playerNumber, 'hasShownComparison:', hasShownComparison);
 
         if (!data) {
           console.log('   No data yet');
           return;
         }
 
-        // Store the other player's answer if available
-        if (playerNumber === 1 && data.player2Answer) {
-          console.log('📥 Player 1 received Player 2 answer');
-          setPlayer2Answers(prev => {
-            const newAnswers = [...prev];
-            newAnswers[currentQuestion] = data.player2Answer;
-            return newAnswers;
-          });
-        } else if (playerNumber === 2 && data.player1Answer) {
-          console.log('📥 Player 2 received Player 1 answer');
+        // Store answers in local state
+        if (data.player1Answer) {
           setPlayer1Answers(prev => {
             const newAnswers = [...prev];
-            newAnswers[currentQuestion] = data.player1Answer;
+            if (!newAnswers[currentQuestion]) {
+              newAnswers[currentQuestion] = data.player1Answer;
+              console.log('💾 Stored player1 answer');
+            }
             return newAnswers;
           });
         }
 
-        // If both players have answered, show comparison
-        if (data.player1Answer && data.player2Answer) {
-          console.log('✅ Both players answered! Showing comparison...');
-
-          // Store both answers using callbacks to ensure sync
-          setPlayer1Answers(prev => {
-            const newAnswers = [...prev];
-            newAnswers[currentQuestion] = data.player1Answer;
-            console.log('💾 Stored player1 answer:', data.player1Answer);
-            return newAnswers;
-          });
-
+        if (data.player2Answer) {
           setPlayer2Answers(prev => {
             const newAnswers = [...prev];
-            newAnswers[currentQuestion] = data.player2Answer;
-            console.log('💾 Stored player2 answer:', data.player2Answer);
+            if (!newAnswers[currentQuestion]) {
+              newAnswers[currentQuestion] = data.player2Answer;
+              console.log('💾 Stored player2 answer');
+            }
             return newAnswers;
           });
+        }
 
-          // Store comparison data and show comparison screen
+        // CRITICAL: Only show comparison if both answers exist AND we haven't shown it yet
+        if (data.player1Answer && data.player2Answer && !hasShownComparison) {
+          console.log('✅✅✅ BOTH ANSWERS DETECTED! Showing comparison for BOTH players');
+          hasShownComparison = true;
+
+          // Store comparison data
           setComparisonData({
             player1Answer: data.player1Answer,
             player2Answer: data.player2Answer
           });
+
+          // Force show comparison screen
           setShowWaiting(false);
           setShowComparison(true);
-          setIsProcessing(false);
-        } else {
-          console.log('⏳ Waiting for other player...', {
-            hasPlayer1Answer: !!data.player1Answer,
-            hasPlayer2Answer: !!data.player2Answer
+          console.log('   Set showComparison = TRUE');
+        } else if (!data.player1Answer || !data.player2Answer) {
+          console.log('⏳ Still waiting...', {
+            hasP1: !!data.player1Answer,
+            hasP2: !!data.player2Answer
           });
         }
       };
@@ -97,7 +92,6 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
       listenerRef.on('value', handleDataUpdate);
 
       return () => {
-        // Cleanup listener when question changes or unmounting
         console.log('🧹 Cleaning up listener for Q', currentQuestion);
         listenerRef.off('value', handleDataUpdate);
       };
