@@ -35,6 +35,7 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
       const handleDataUpdate = (snapshot) => {
         const data = snapshot.val();
         console.log('📡 Compatibility data updated for Q', currentQuestion, ':', data);
+        console.log('   My playerNumber:', playerNumber, 'showComparison:', showComparison, 'showWaiting:', showWaiting);
 
         if (!data) {
           console.log('   No data yet');
