@@ -13,6 +13,7 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
   const [showComparison, setShowComparison] = useState(false);
   const [showWaiting, setShowWaiting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState(null);
 
   const isOnlineMode = !!roomCode;
 
@@ -86,10 +87,28 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
   };
 
   const moveOption = (fromIndex, toIndex) => {
+    console.log(`🔄 Moving item from ${fromIndex} to ${toIndex}`);
     const newRanked = [...rankedOptions];
     const [removed] = newRanked.splice(fromIndex, 1);
     newRanked.splice(toIndex, 0, removed);
     setRankedOptions(newRanked);
+  };
+
+  const handleDragStart = (index) => {
+    console.log('🎯 Drag started at index:', index);
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (index) => {
+    if (draggedIndex === null || draggedIndex === index) return;
+    console.log(`🔄 Dragging over index ${index}, dragged is ${draggedIndex}`);
+    moveOption(draggedIndex, index);
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    console.log('✋ Drag ended');
+    setDraggedIndex(null);
   };
 
   const submitRanking = async () => {
@@ -332,8 +351,10 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
               key={option.id}
               option={option}
               index={index}
-              onMove={moveOption}
-              totalItems={rankedOptions.length}
+              isDragging={draggedIndex === index}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
             />
           ))}
         </View>
@@ -346,68 +367,69 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
   );
 }
 
-// Draggable Item Component with proper reordering
-function DraggableItem({ option, index, onMove, totalItems }) {
+// Draggable Item Component - Simplified with parent state management
+function DraggableItem({ option, index, isDragging, onDragStart, onDragOver, onDragEnd }) {
   const pan = useRef(new Animated.ValueXY()).current;
-  const [isDragging, setIsDragging] = useState(false);
-  const lastSwapIndex = useRef(index);
-  const itemHeight = 85; // Height of each item including margin
+  const [localDragging, setLocalDragging] = useState(false);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        console.log('🎯 Started dragging item at index:', index);
-        setIsDragging(true);
-        lastSwapIndex.current = index;
-        pan.setOffset({ x: 0, y: 0 });
-        pan.setValue({ x: 0, y: 0 });
+        setLocalDragging(true);
+        onDragStart(index);
       },
-      onPanResponderMove: (_, gesture) => {
-        // Move item visually
-        pan.setValue({ x: 0, y: gesture.dy });
+      onPanResponderMove: Animated.event(
+        [null, { dx: pan.x, dy: pan.y }],
+        {
+          useNativeDriver: false,
+          listener: (event, gestureState) => {
+            // Every 40 pixels of movement, check what item we're over
+            const itemHeight = 85;
+            const offset = gestureState.dy;
+            const steps = Math.round(offset / itemHeight);
+            const targetIndex = index + steps;
 
-        // Calculate which position we're hovering over
-        const currentOffset = gesture.dy;
-        const hoverIndex = Math.round(currentOffset / itemHeight);
-        const targetIndex = Math.max(0, Math.min(totalItems - 1, lastSwapIndex.current + hoverIndex));
-
-        // If we've crossed into a new position, swap
-        if (targetIndex !== lastSwapIndex.current) {
-          console.log(`🔄 Swapping from ${lastSwapIndex.current} to ${targetIndex}`);
-          onMove(lastSwapIndex.current, targetIndex);
-          lastSwapIndex.current = targetIndex;
+            // Trigger drag over if we're hovering a different item
+            if (Math.abs(offset) > itemHeight / 3) {
+              onDragOver(targetIndex);
+            }
+          }
         }
-      },
+      ),
       onPanResponderRelease: () => {
-        console.log('✋ Released drag');
-        setIsDragging(false);
+        setLocalDragging(false);
+        onDragEnd();
 
-        // Animate back to rest position
+        // Reset position
         Animated.spring(pan, {
           toValue: { x: 0, y: 0 },
           useNativeDriver: false,
-          tension: 80,
-          friction: 10
+          friction: 7
         }).start();
       }
     })
   ).current;
 
+  // Reset animation when component re-renders at new position
+  useEffect(() => {
+    pan.setValue({ x: 0, y: 0 });
+  }, [index]);
+
   return (
     <Animated.View
       style={[
         styles.draggableItem,
-        {
+        localDragging && {
           transform: pan.getTranslateTransform(),
-          zIndex: isDragging ? 1000 : 1,
-          elevation: isDragging ? 8 : 0
+          zIndex: 1000,
+          elevation: 8
         }
       ]}
       {...panResponder.panHandlers}
     >
-      <View style={[styles.rankingItem, isDragging && styles.rankingItemDragging]}>
+      <View style={[styles.rankingItem, localDragging && styles.rankingItemDragging]}>
         <Text style={styles.rankNumberBadge}>{index + 1}</Text>
         <Text style={styles.optionText}>{option.text}</Text>
         <Text style={styles.dragHandle}>⋮⋮</Text>
