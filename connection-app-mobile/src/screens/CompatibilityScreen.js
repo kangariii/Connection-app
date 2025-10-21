@@ -18,7 +18,7 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
   const isOnlineMode = !!roomCode;
 
   useEffect(() => {
-    console.log('🎮 CompatibilityScreen mounted:', { roomCode, playerId, playerNumber });
+    console.log('🎮 CompatibilityScreen effect for Q', currentQuestion, { roomCode, playerId, playerNumber });
 
     // Initialize with current question's options
     if (currentQuestion < compatibilityQuestions.length) {
@@ -26,65 +26,76 @@ export default function CompatibilityScreen({ player1Name, player2Name, onComple
     }
 
     // Setup Firebase listeners if online
-    if (isOnlineMode) {
-      setupCompatibilityListener();
+    if (isOnlineMode && currentQuestion < compatibilityQuestions.length) {
+      console.log('📡 Setting up compatibility listener for Q', currentQuestion);
+
+      const listenerRef = database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`);
+
+      const handleDataUpdate = (snapshot) => {
+        const data = snapshot.val();
+        console.log('📡 Compatibility data updated for Q', currentQuestion, ':', data);
+
+        if (!data) {
+          console.log('   No data yet');
+          return;
+        }
+
+        // Store the other player's answer if available
+        if (playerNumber === 1 && data.player2Answer) {
+          console.log('📥 Player 1 received Player 2 answer');
+          setPlayer2Answers(prev => {
+            const newAnswers = [...prev];
+            newAnswers[currentQuestion] = data.player2Answer;
+            return newAnswers;
+          });
+        } else if (playerNumber === 2 && data.player1Answer) {
+          console.log('📥 Player 2 received Player 1 answer');
+          setPlayer1Answers(prev => {
+            const newAnswers = [...prev];
+            newAnswers[currentQuestion] = data.player1Answer;
+            return newAnswers;
+          });
+        }
+
+        // If both players have answered, show comparison
+        if (data.player1Answer && data.player2Answer) {
+          console.log('✅ Both players answered! Showing comparison...');
+
+          // Store both answers
+          setPlayer1Answers(prev => {
+            const newAnswers = [...prev];
+            newAnswers[currentQuestion] = data.player1Answer;
+            return newAnswers;
+          });
+          setPlayer2Answers(prev => {
+            const newAnswers = [...prev];
+            newAnswers[currentQuestion] = data.player2Answer;
+            return newAnswers;
+          });
+
+          // Show comparison after brief delay
+          setTimeout(() => {
+            setShowWaiting(false);
+            setShowComparison(true);
+            setIsProcessing(false);
+          }, 500);
+        } else {
+          console.log('⏳ Waiting for other player...', {
+            hasPlayer1Answer: !!data.player1Answer,
+            hasPlayer2Answer: !!data.player2Answer
+          });
+        }
+      };
+
+      listenerRef.on('value', handleDataUpdate);
+
+      return () => {
+        // Cleanup listener when question changes or unmounting
+        console.log('🧹 Cleaning up listener for Q', currentQuestion);
+        listenerRef.off('value', handleDataUpdate);
+      };
     }
-
-    return () => {
-      // Cleanup listeners
-      if (isOnlineMode) {
-        database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).off();
-      }
-    };
-  }, [currentQuestion]);
-
-  const setupCompatibilityListener = () => {
-    console.log('📡 Setting up compatibility listener for Q', currentQuestion);
-
-    database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).on('value', (snapshot) => {
-      const data = snapshot.val();
-      console.log('📡 Compatibility data updated:', data);
-
-      if (!data) return;
-
-      // Store the other player's answer if available
-      if (playerNumber === 1 && data.player2Answer) {
-        console.log('📥 Player 1 received Player 2 answer');
-        const newAnswers = [...player2Answers];
-        newAnswers[currentQuestion] = data.player2Answer;
-        setPlayer2Answers(newAnswers);
-      } else if (playerNumber === 2 && data.player1Answer) {
-        console.log('📥 Player 2 received Player 1 answer');
-        const newAnswers = [...player1Answers];
-        newAnswers[currentQuestion] = data.player1Answer;
-        setPlayer1Answers(newAnswers);
-      }
-
-      // If both players have answered, show comparison
-      if (data.player1Answer && data.player2Answer && !isProcessing) {
-        console.log('✅ Both players answered! Showing comparison...');
-        setIsProcessing(true);
-
-        // Store both answers
-        const newP1Answers = [...player1Answers];
-        const newP2Answers = [...player2Answers];
-        newP1Answers[currentQuestion] = data.player1Answer;
-        newP2Answers[currentQuestion] = data.player2Answer;
-        setPlayer1Answers(newP1Answers);
-        setPlayer2Answers(newP2Answers);
-
-        // Remove listener
-        database.ref(`rooms/${roomCode}/compatibility/${currentQuestion}`).off();
-
-        // Show comparison after brief delay
-        setTimeout(() => {
-          setShowWaiting(false);
-          setShowComparison(true);
-          setIsProcessing(false);
-        }, 500);
-      }
-    });
-  };
+  }, [currentQuestion, roomCode, playerNumber]);
 
   const moveOption = (fromIndex, toIndex) => {
     console.log(`🔄 Moving item from ${fromIndex} to ${toIndex}`);
